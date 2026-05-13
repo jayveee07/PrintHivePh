@@ -1,0 +1,135 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "List of authorized admin UIDs",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Store items and inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "stock": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "category", "stock"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product categories",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["printing", "office", "school", "merchandise"] }
+      },
+      "required": ["name", "type"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer print requests and bookings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "processing", "printing", "ready", "completed", "cancelled"] },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "type": { "type": "string", "enum": ["printing", "supply"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["status", "total", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "POS sales records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "gcash"] },
+        "receivedAmount": { "type": "number" },
+        "change": { "type": "number" },
+        "adminId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["items", "total", "paymentMethod", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Customer contact form submissions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["unread", "replied", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message", "status", "createdAt"]
+    },
+    "PortfolioItem": {
+      "title": "Portfolio Item",
+      "description": "Showcase of previous works",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["title", "imageUrl"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Business expenditures",
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["description", "amount", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/admins/{adminId}": { "schema": "Admin", "description": "Whitelisted admin users" },
+    "/products/{productId}": { "schema": "Product", "description": "Product inventory" },
+    "/categories/{categoryId}": { "schema": "Category", "description": "Product categories" },
+    "/orders/{orderId}": { "schema": "Order", "description": "Customer orders and bookings" },
+    "/transactions/{transactionId}": { "schema": "Transaction", "description": "POS transactions" },
+    "/inquiries/{inquiryId}": { "schema": "Inquiry", "description": "Contact form inquiries" },
+    "/portfolio/{itemId}": { "schema": "PortfolioItem", "description": "Portfolio items" },
+    "/expenses/{expenseId}": { "schema": "Expense", "description": "Business expenses" }
+  }
+}
