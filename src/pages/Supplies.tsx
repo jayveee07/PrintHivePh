@@ -105,7 +105,7 @@ export function Supplies() {
               >
                 <div className="aspect-square bg-gradient-to-br from-white/5 to-transparent p-10 flex items-center justify-center relative">
                    {product.imageUrl ? (
-                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                     <img src={product.imageUrl || undefined} alt={product.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
                    ) : (
                      <ShoppingBag size={60} className="text-gray-800" />
                    )}

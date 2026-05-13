@@ -82,7 +82,7 @@ export function Portfolio() {
                 className="group relative rounded-[40px] overflow-hidden bg-[#0B0F19] border border-white/10 aspect-square"
               >
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <img src={item.imageUrl || undefined} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-800 italic">Work Preview</div>
                 )}

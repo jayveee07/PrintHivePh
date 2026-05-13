@@ -186,7 +186,7 @@ export function ProductManagement() {
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
                            {product.imageUrl ? (
-                             <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
+                             <img src={product.imageUrl || undefined} alt="" className="w-full h-full object-cover" />
                            ) : (
                              <ImageIcon size={20} className="text-gray-700" />
                            )}

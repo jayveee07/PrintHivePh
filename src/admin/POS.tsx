@@ -163,7 +163,7 @@ export function POS() {
               >
                 <div className="aspect-square bg-white/5 rounded-2xl mb-4 overflow-hidden relative">
                    {product.imageUrl ? (
-                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                     <img src={product.imageUrl || undefined} alt={product.name} className="w-full h-full object-cover" />
                    ) : (
                      <div className="w-full h-full flex items-center justify-center text-gray-700">
                         <ShoppingBag size={40} />

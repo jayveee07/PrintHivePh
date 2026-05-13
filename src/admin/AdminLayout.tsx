@@ -14,15 +14,19 @@ import {
   TrendingDown,
   Menu,
   X,
-  ExternalLink
+  ExternalLink,
+  Fingerprint
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
+
+import { AdminLoginModal } from '../components/AdminLoginModal';
 
 export function AdminLayout() {
   const { isAdmin, loading, signOut, user, profile } = useAuth();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(true);
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
@@ -30,7 +34,35 @@ export function AdminLayout() {
     </div>
   );
 
-  if (!isAdmin) return <Navigate to="/" />;
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#06080E] flex flex-col items-center justify-center p-6 text-center">
+        <AdminLoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+        <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
+           <div className="w-20 h-20 mx-auto rounded-3xl bg-[#12A8FF]/5 border border-[#12A8FF]/30 flex items-center justify-center text-[#12A8FF] mb-8">
+              <Fingerprint size={40} className="animate-pulse" />
+           </div>
+           <h1 className="text-3xl font-black text-white uppercase tracking-[6px]">
+             Secure <span className="text-[#12A8FF]">Hive</span>
+           </h1>
+           <p className="text-gray-500 text-sm font-medium tracking-widest uppercase">
+             Restricted Access Node • Authentication Required
+           </p>
+           <div className="pt-8 flex flex-col gap-4">
+              <button 
+                onClick={() => setIsLoginModalOpen(true)}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#12A8FF] to-[#0070FF] text-white font-black text-sm uppercase tracking-[2px] transition-all flex items-center justify-center gap-3 hover:shadow-[0_0_30px_rgba(18,168,255,0.4)]"
+              >
+                Launch Authentication Modal
+              </button>
+              <Link to="/" className="text-xs text-gray-600 font-bold uppercase tracking-widest hover:text-white transition-colors">
+                Return to Public Proxy
+              </Link>
+           </div>
+        </div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/admin' },
@@ -122,7 +154,7 @@ export function AdminLayout() {
                 <span className="text-sm font-bold">{user?.displayName}</span>
                 <span className="text-[10px] text-[#12A8FF] font-black uppercase tracking-widest">{profile?.role}</span>
              </div>
-             <img src={user?.photoURL || ''} alt="" className="w-10 h-10 rounded-full border border-[#12A8FF]/30 shadow-[0_0_15px_rgba(18,168,255,0.2)]" />
+             <img src={user?.photoURL || undefined} alt="" className="w-10 h-10 rounded-full border border-[#12A8FF]/30 shadow-[0_0_15px_rgba(18,168,255,0.2)]" />
           </div>
         </header>
 

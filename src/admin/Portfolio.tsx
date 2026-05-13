@@ -112,7 +112,7 @@ export function PortfolioManagement() {
             >
               <div className="aspect-square bg-white/5 relative">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={item.imageUrl || undefined} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-800"><ImageIcon size={40} /></div>
                 )}

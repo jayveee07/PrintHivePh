@@ -95,7 +95,7 @@ export function Navbar() {
           )}
           {user ? (
             <Link to="/profile" className="flex items-center gap-2 text-white hover:text-[#12A8FF] transition-colors">
-              <img src={user.photoURL || ''} alt="" className="w-8 h-8 rounded-full border border-white/20" />
+              <img src={user.photoURL || undefined} alt="" className="w-8 h-8 rounded-full border border-white/20" />
               <span className="text-sm font-medium">{user.displayName?.split(' ')[0]}</span>
             </Link>
           ) : (
@@ -146,7 +146,7 @@ export function Navbar() {
               )}
               {user ? (
                  <Link to="/profile" className="flex items-center gap-3 text-white">
-                    <img src={user.photoURL || ''} alt="" className="w-10 h-10 rounded-full" />
+                    <img src={user.photoURL || undefined} alt="" className="w-10 h-10 rounded-full" />
                     <span>My Profile</span>
                  </Link>
               ) : (

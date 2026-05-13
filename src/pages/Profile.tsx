@@ -23,7 +23,7 @@ export function Profile() {
          <div className="h-32 bg-gradient-to-r from-[#12A8FF] via-[#FF1493] to-[#A020F0]" />
          <div className="px-10 pb-10">
             <div className="relative -top-12 flex justify-center">
-               <img src={user.photoURL || ''} alt="" className="w-24 h-24 rounded-full border-4 border-black" />
+               <img src={user.photoURL || undefined} alt="" className="w-24 h-24 rounded-full border-4 border-black" />
             </div>
             
             <div className="text-center -mt-8 mb-10">

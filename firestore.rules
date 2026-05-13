@@ -17,8 +17,11 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || 
-        request.auth.token.email == 'jvpaisan@gmail.com'
+        request.auth.token.email == 'jvpaisan@gmail.com' ||
+        request.auth.token.email == 'printhiveph.2026@gmail.com' ||
+        request.auth.uid == 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
+        request.auth.uid == 'KtvVHRSr28X8i4b3jd84F4gK7953' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
 
@@ -37,26 +40,23 @@ service cloud.firestore {
     // Entity Validations
     function isValidInquiry(data) {
       return data.keys().hasAll(['name', 'email', 'message', 'status', 'createdAt']) &&
-             data.keys().size() == 5 &&
              data.name is string && data.name.size() <= 100 &&
              data.email is string && data.email.size() <= 100 &&
              data.message is string && data.message.size() <= 2000 &&
-             data.status == 'unread' &&
+             data.status in ['unread', 'replied', 'resolved'] &&
              data.createdAt == request.time;
     }
 
     function isValidProduct(data) {
       return data.keys().hasAll(['name', 'description', 'price', 'category', 'stock', 'imageUrl', 'createdAt']) &&
-             data.keys().size() == 7 &&
              data.name is string && data.name.size() <= 200 &&
              data.price is number && data.price >= 0 &&
              data.stock is number && data.stock >= 0 &&
-             data.createdAt == request.time;
+             data.createdAt is timestamp;
     }
 
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt']) &&
-             data.keys().size() == 6 &&
              data.uid == request.auth.uid &&
              data.role == 'user'; // Users cannot self-promote to admin
     }
@@ -71,10 +71,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin();
-      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
-      allow update: if isSignedIn() && request.auth.uid == userId && 
-                    incoming().role == existing().role && 
-                    incoming().uid == existing().uid;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
     // Rules for Products
