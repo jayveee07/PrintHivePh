@@ -7,8 +7,10 @@ import { cn } from '../lib/utils';
 import { signInWithGoogle } from '../firebase/config';
 import { AdminLoginModal } from './AdminLoginModal';
 
-import logo from '../assets/logoc.png';
-import logonb from '../assets/logo.png';
+import logo from '../assets/logo.png';
+import logonb from '../assets/logonb.png';
+import logor from '../assets/logor.png';
+import logoc from '../assets/logoc.png';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,7 +71,7 @@ export function Navbar() {
             <div className="absolute inset-0 bg-gradient-to-tr from-[#12A8FF]/20 to-[#FF1493]/20 rounded-2xl flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(18,168,255,0.3)] transition-all overflow-hidden border border-white/10">
                {!logoError ? (
                  <img 
-                   src={logonb} 
+                   src={logor} 
                    alt="PrintHive Logo" 
                    className="w-full h-full object-contain p-2 transition-transform group-hover:scale-110"
                    onError={() => setLogoError(true)}
