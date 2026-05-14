@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, signInWithGoogle, signInWithEmailAndPassword } from '../firebase/config';
+import { auth, db, signInWithGoogle, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase/config';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
@@ -23,69 +23,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        // Check if profile exists, if not create one
-        const userDocRef = doc(db, 'users', user.uid);
-        let userDoc;
+    const unsubscribe = onAuthStateChanged(auth, async (authenticatedUser) => {
+      setUser(authenticatedUser);
+      
+      if (authenticatedUser) {
         try {
-          userDoc = await getDoc(userDocRef);
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
-          return;
-        }
+          // Check if profile exists, if not create one
+          const userDocRef = doc(db, 'users', authenticatedUser.uid);
+          const userDoc = await getDoc(userDocRef);
 
-        let currentProfile: UserProfile;
+          let currentProfile: UserProfile;
 
-        if (!userDoc.exists()) {
-          const newProfile: Partial<UserProfile> = {
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || 'Guest User',
-            photoURL: user.photoURL || '',
-            role: 'user',
-            createdAt: new Date(),
-          };
-          try {
+          if (!userDoc.exists()) {
+            const newProfile: Partial<UserProfile> = {
+              uid: authenticatedUser.uid,
+              email: authenticatedUser.email || '',
+              displayName: authenticatedUser.displayName || 'Guest User',
+              photoURL: authenticatedUser.photoURL || '',
+              role: 'user',
+              createdAt: new Date(),
+            };
+            
             await setDoc(userDocRef, {
               ...newProfile,
               createdAt: serverTimestamp(),
             });
-          } catch (error) {
-            handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}`);
-            return;
+            
+            currentProfile = { ...newProfile, role: 'user', createdAt: new Date() } as UserProfile;
+          } else {
+            currentProfile = userDoc.data() as UserProfile;
           }
-          currentProfile = newProfile as UserProfile;
-        } else {
-          currentProfile = userDoc.data() as UserProfile;
-        }
 
-        // Check if admin
-        let isUserAdmin = false;
-        try {
-          const adminDocRef = doc(db, 'admins', user.uid);
-          const adminDoc = await getDoc(adminDocRef);
-          isUserAdmin = adminDoc.exists() || 
-                             user.email === 'jvpaisan@gmail.com' || 
-                             user.email === 'printhiveph.2026@gmail.com' ||
-                             user.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
-                             user.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
+          // Check if admin
+          let isUserAdmin = false;
+          try {
+            const adminDocRef = doc(db, 'admins', authenticatedUser.uid);
+            const adminDoc = await getDoc(adminDocRef);
+            isUserAdmin = adminDoc.exists() || 
+                             authenticatedUser.email === 'jvpaisan@gmail.com' || 
+                             authenticatedUser.email === 'printhiveph.2026@gmail.com' ||
+                             authenticatedUser.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
+                             authenticatedUser.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
+          } catch (adminError) {
+            console.error('Admin check error:', adminError);
+            // Fallback strategy
+            isUserAdmin = authenticatedUser.email === 'jvpaisan@gmail.com' || 
+                          authenticatedUser.email === 'printhiveph.2026@gmail.com' ||
+                          authenticatedUser.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
+                          authenticatedUser.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
+          }
+          
+          setIsAdmin(isUserAdmin);
+          if (isUserAdmin) {
+            currentProfile.role = 'admin';
+          }
+          
+          setProfile(currentProfile);
         } catch (error) {
-          // Fallback if admin check fails (e.g. permission error on admins collection)
-          isUserAdmin = user.email === 'jvpaisan@gmail.com' || 
-                        user.email === 'printhiveph.2026@gmail.com' ||
-                        user.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
-                        user.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
+          console.error('Error in AuthProvider initialization:', error);
+          // If profile fetch fails, we still set the user but might have limited profile info
+          setProfile(null); 
         }
-        
-        setIsAdmin(isUserAdmin);
-        
-        if (isUserAdmin) {
-          currentProfile.role = 'admin';
-        }
-        
-        setProfile(currentProfile);
       } else {
         setProfile(null);
         setIsAdmin(false);

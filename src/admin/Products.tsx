@@ -54,7 +54,7 @@ export function ProductManagement() {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(items);
     } catch (error) {
-       console.error('Error fetching products:', error);
+       handleFirestoreError(error, OperationType.GET, 'products');
     } finally {
       setLoading(false);
     }

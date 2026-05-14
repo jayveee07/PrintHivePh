@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 // Components
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { AIChatBot } from './components/AIChatBot';
 
 // Public Pages
 import { Home } from './pages/Home';
@@ -50,6 +51,8 @@ export default function App() {
             borderRadius: '16px',
           }
         }} />
+        
+        <AIChatBot />
         
         <Routes>
           {/* Public Routes */}

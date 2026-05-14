@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Search, ShoppingBag, Filter, ChevronRight } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db, handleFirestoreError, OperationType } from '../firebase/config';
 import { Product } from '../types';
 import { formatCurrency, cn } from '../lib/utils';
 
@@ -19,10 +19,7 @@ export function Supplies() {
   const fetchSupplies = async () => {
     setLoading(true);
     try {
-      let q = query(collection(db, 'products'));
-      
-      // Initial fetch of all products, then filter locally for search, 
-      // but category filter can be server-side if we want
+      const q = query(collection(db, 'products'));
       const snapshot = await getDocs(q);
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       
@@ -30,7 +27,7 @@ export function Supplies() {
       const supplyItems = items.filter(p => p.category.includes('Supplies'));
       setProducts(supplyItems);
     } catch (error) {
-      console.error('Error fetching supplies:', error);
+      handleFirestoreError(error, OperationType.GET, 'products');
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, Sparkles, Printer, MousePointer2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import coverImg from '../assets/cover.png';
 
 export function Hero() {
   return (
@@ -71,51 +72,58 @@ export function Hero() {
            transition={{ duration: 1, type: 'spring' }}
            className="relative"
         >
-          {/* Mockup Floating Elements */}
-          <div className="relative z-10 w-full aspect-square bg-gradient-to-br from-white/10 to-transparent rounded-3xl border border-white/10 backdrop-blur-3xl p-8 flex items-center justify-center">
-             <div className="relative">
+          {/* Main Visual */}
+          <div className="relative z-10 w-full aspect-square rounded-3xl overflow-hidden border border-white/10 group shadow-2xl">
+             <img 
+               src={coverImg} 
+               alt="Professional Printing Services" 
+               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+               onError={(e) => {
+                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?auto=format&fit=crop&q=80&w=1200';
+               }}
+             />
+             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+             
+             {/* Floating Elements on Top */}
+             <div className="absolute inset-0 p-8 flex flex-col justify-end">
                 <motion.div 
-                  animate={{ y: [0, -20, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-48 h-64 bg-white rounded-lg shadow-2xl relative z-20 flex flex-col items-center justify-center p-4"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20"
                 >
-                   <div className="w-full h-full border-2 border-dashed border-gray-200 rounded flex items-center justify-center italic text-gray-300 text-sm">
-                      Your Design Here
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#12A8FF]/20 flex items-center justify-center text-[#12A8FF]">
+                         <Printer size={20} />
+                      </div>
+                      <div>
+                         <div className="text-white font-bold text-sm">Precision Print</div>
+                         <div className="text-gray-400 text-[10px] uppercase tracking-widest font-bold">Node-01 Active</div>
+                      </div>
                    </div>
                 </motion.div>
-                
-                {/* Decorative blobs */}
-                <motion.div 
-                   animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
-                   transition={{ duration: 10, repeat: Infinity }}
-                   className="absolute -top-10 -right-10 w-32 h-32 bg-[#FF1493]/30 rounded-full blur-2xl" 
-                />
-                <motion.div 
-                   animate={{ scale: [1, 1.3, 1], rotate: [0, -45, 0] }}
-                   transition={{ duration: 8, repeat: Infinity }}
-                   className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#12A8FF]/30 rounded-full blur-2xl" 
-                />
              </div>
-             
-             {/* Floating Icons */}
-             <motion.div 
-               animate={{ y: [0, -10, 0] }}
-               transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
-               className="absolute top-10 right-10 p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-[#12A8FF]"
-             >
-                <Printer size={24} />
-             </motion.div>
-             <motion.div 
-               animate={{ y: [0, 15, 0] }}
-               transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-               className="absolute bottom-20 left-10 p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-[#FFC107]"
-             >
-                <MousePointer2 size={24} />
-             </motion.div>
           </div>
           
+          {/* Decorative floating icons */}
+          <motion.div 
+            animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-6 -right-6 p-4 bg-[#FFC107] text-black rounded-2xl shadow-xl z-20"
+          >
+             <Sparkles size={24} />
+          </motion.div>
+          
+          <motion.div 
+            animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute bottom-10 -left-10 p-4 bg-[#12A8FF] text-white rounded-2xl shadow-xl z-20"
+          >
+             <MousePointer2 size={24} />
+          </motion.div>
+          
           {/* Neon Glow effect behind */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#12A8FF] to-[#FF1493] opacity-20 blur-[100px] -z-10 rounded-full" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#12A8FF] to-[#FF1493] opacity-30 blur-[100px] -z-10 rounded-full" />
         </motion.div>
       </div>
     </section>

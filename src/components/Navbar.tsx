@@ -7,6 +7,9 @@ import { cn } from '../lib/utils';
 import { signInWithGoogle } from '../firebase/config';
 import { AdminLoginModal } from './AdminLoginModal';
 
+import logo from '../assets/logoc.png';
+import logonb from '../assets/logonb.png';
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
@@ -45,6 +48,8 @@ export function Navbar() {
     }
   };
 
+  const [logoError, setLogoError] = useState(false);
+
   return (
     <nav
       className={cn(
@@ -57,14 +62,32 @@ export function Navbar() {
         <Link 
           to="/" 
           onClick={handleLogoClick}
-          className="flex items-center gap-2 group"
+          className="flex items-center gap-3 group"
         >
-          <div className="w-10 h-10 bg-gradient-to-tr from-[#12A8FF] to-[#FF1493] rounded-lg flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(18,168,255,0.5)] transition-all">
-             <div className="text-white font-bold text-xl italic">PH</div>
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            {/* Logo Container */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#12A8FF]/20 to-[#FF1493]/20 rounded-2xl flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(18,168,255,0.3)] transition-all overflow-hidden border border-white/10">
+               {!logoError ? (
+                 <img 
+                   src={logonb} 
+                   alt="PrintHive Logo" 
+                   className="w-full h-full object-contain p-2 transition-transform group-hover:scale-110"
+                   onError={() => setLogoError(true)}
+                 />
+               ) : (
+                 <div className="text-white font-black text-xl italic pointer-events-none">PH</div>
+               )}
+            </div>
+            
+            {/* Holographic decoration */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#12A8FF] to-[#FF1493] opacity-20 blur-sm rounded-2xl -z-10 group-hover:opacity-40 transition-opacity" />
           </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            PrintHive PH
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 tracking-tight leading-none">
+              PrintHive PH
+            </span>
+            <span className="text-[10px] font-bold text-[#12A8FF] uppercase tracking-[0.2em] mt-1">Creative Studio</span>
+          </div>
         </Link>
 
         {/* Desktop Nav */}

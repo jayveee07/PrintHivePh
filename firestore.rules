@@ -77,7 +77,7 @@ service cloud.firestore {
 
     // Rules for Products
     match /products/{productId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isAdmin() && isValidProduct(incoming());
       allow update: if isAdmin() && isValidProduct(incoming());
       allow delete: if isAdmin();
