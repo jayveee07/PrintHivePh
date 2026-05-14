@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Components
 import { Navbar } from './components/Navbar';
@@ -28,6 +28,9 @@ import { CustomerManagement } from './admin/Customers';
 import { Analytics } from './admin/Analytics';
 import { PortfolioManagement } from './admin/Portfolio';
 import { Expenses } from './admin/Expenses';
+import { Categories } from './admin/Categories';
+import { ServicesAdmin } from './admin/Services';
+import { SystemLogs } from './admin/Logs';
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -38,10 +41,26 @@ function ScrollToTop() {
   return null;
 }
 
+// Redirect admin to dashboard if they land on home
+function AdminRedirect() {
+  const { isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading && isAdmin && location.pathname === '/') {
+      navigate('/admin');
+    }
+  }, [isAdmin, loading, location.pathname, navigate]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <Router>
       <AuthProvider>
+        <AdminRedirect />
         <ScrollToTop />
         <Toaster position="bottom-right" toastOptions={{
           style: {
@@ -69,12 +88,15 @@ export default function App() {
              <Route index element={<Dashboard />} />
              <Route path="pos" element={<POS />} />
              <Route path="products" element={<ProductManagement />} />
+             <Route path="services" element={<ServicesAdmin />} />
+             <Route path="categories" element={<Categories />} />
              <Route path="orders" element={<OrderTracker />} />
              <Route path="customers" element={<CustomerManagement />} />
              <Route path="analytics" element={<Analytics />} />
              <Route path="portfolio" element={<PortfolioManagement />} />
              <Route path="inquiries" element={<Inquiries />} />
              <Route path="expenses" element={<Expenses />} />
+             <Route path="logs" element={<SystemLogs />} />
              <Route path="*" element={<Dashboard />} />
           </Route>
         </Routes>

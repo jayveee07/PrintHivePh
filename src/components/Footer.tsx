@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import logor from '../assets/logor.png';
 
 export function Footer() {
   return (
@@ -9,8 +10,8 @@ export function Footer() {
         {/* Branding */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-tr from-[#12A8FF] to-[#FF1493] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PH</span>
+            <div className="w-8 h-8 rounded flex items-center justify-center overflow-hidden">
+              <img src={logor} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-xl font-bold text-white">PrintHive PH</span>
           </div>

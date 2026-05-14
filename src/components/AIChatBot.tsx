@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
 import Markdown from 'react-markdown';
@@ -33,6 +34,7 @@ Style: Use markdown for formatting. Be concise but informative.
 If a user asks for a price, tell them they can request a quote via the Contact page or visit the supplies page for specific product prices.`;
 
 export function AIChatBot() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -49,6 +51,11 @@ export function AIChatBot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Hide on admin routes (must be after all hooks)
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;

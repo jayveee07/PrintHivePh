@@ -34,10 +34,25 @@
         "price": { "type": "number" },
         "category": { "type": "string" },
         "stock": { "type": "number" },
+        "barcode": { "type": "string" },
         "imageUrl": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "price", "category", "stock"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Managed services offered by the business",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "iconName": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["title", "description"]
     },
     "Category": {
       "title": "Category",
@@ -119,6 +134,21 @@
         "date": { "type": "string", "format": "date-time" }
       },
       "required": ["description", "amount", "date"]
+    },
+    "ActivityLog": {
+      "title": "Activity Log",
+      "description": "System audit trail for administrative actions",
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetType": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminEmail", "action", "timestamp"]
     }
   },
   "firestore": {
@@ -130,6 +160,8 @@
     "/transactions/{transactionId}": { "schema": "Transaction", "description": "POS transactions" },
     "/inquiries/{inquiryId}": { "schema": "Inquiry", "description": "Contact form inquiries" },
     "/portfolio/{itemId}": { "schema": "PortfolioItem", "description": "Portfolio items" },
-    "/expenses/{expenseId}": { "schema": "Expense", "description": "Business expenses" }
+    "/services/{serviceId}": { "schema": "Service", "description": "Business services" },
+    "/expenses/{expenseId}": { "schema": "Expense", "description": "Business expenses" },
+    "/activity_logs/{logId}": { "schema": "ActivityLog", "description": "Admin audit logs" }
   }
 }

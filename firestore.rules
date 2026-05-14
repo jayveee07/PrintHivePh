@@ -1,125 +1,75 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 0. Default Deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Helper functions
+    
+    // --- HELPER FUNCTIONS ---
+    
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isEmailVerified() {
-      return isSignedIn() && request.auth.token.email_verified == true;
-    }
-
+    // Hardcoded admin check for bootstrap and production fallback
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'jvpaisan@gmail.com' ||
-        request.auth.token.email == 'printhiveph.2026@gmail.com' ||
-        request.auth.uid == 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
+        request.auth.uid == '8Ajzo3JgCre3CXgIwI7entja1yr2' || 
+        request.auth.uid == 'ux0ysOYCeTYKFFHO9BCWqrM08f32' || 
         request.auth.uid == 'KtvVHRSr28X8i4b3jd84F4gK7953' ||
+        request.auth.token.email == 'jvpaisan@gmail.com' || 
+        request.auth.token.email == 'printhiveph.2026@gmail.com' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    // --- COLLECTION RULES ---
+
+    // 1. PRODUCTS - Publicly readable
+    match /products/{productId=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    function incoming() {
-      return request.resource.data;
+    // 2. ORDERS - User sees own, Admin sees all
+    match /orders/{orderId=**} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow write: if isAdmin();
     }
 
-    function existing() {
-      return resource.data;
-    }
-
-    // Entity Validations
-    function isValidInquiry(data) {
-      return data.keys().hasAll(['name', 'email', 'message', 'status', 'createdAt']) &&
-             data.name is string && data.name.size() <= 100 &&
-             data.email is string && data.email.size() <= 100 &&
-             data.message is string && data.message.size() <= 2000 &&
-             data.status in ['unread', 'replied', 'resolved'] &&
-             data.createdAt == request.time;
-    }
-
-    function isValidProduct(data) {
-      return data.keys().hasAll(['name', 'description', 'price', 'category', 'stock', 'imageUrl', 'createdAt']) &&
-             data.name is string && data.name.size() <= 200 &&
-             data.price is number && data.price >= 0 &&
-             data.stock is number && data.stock >= 0 &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt']) &&
-             data.uid == request.auth.uid &&
-             data.role == 'user'; // Users cannot self-promote to admin
-    }
-
-    // Rules for Admins collection
-    match /admins/{adminId} {
-      allow read: if isSignedIn();
-      allow write: if false; 
-    }
-
-    // Rules for Users
+    // 3. USERS - User owns doc, Admin sees all
     match /users/{userId} {
-      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow list: if isAdmin();
+      allow read, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
     }
 
-    // Rules for Products
-    match /products/{productId} {
-      allow get, list: if true;
-      allow create: if isAdmin() && isValidProduct(incoming());
-      allow update: if isAdmin() && isValidProduct(incoming());
-      allow delete: if isAdmin();
-    }
-
-    // Rules for Categories
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Rules for Inquiries
-    match /inquiries/{inquiryId} {
-      allow get, list: if isAdmin();
-      allow create: if isValidInquiry(incoming());
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    // Rules for Orders
-    match /orders/{orderId} {
-      allow get: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
-      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
-      allow create: if isSignedIn() && incoming().customerId == request.auth.uid;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    // Rules for Transactions (Admin Only)
-    match /transactions/{transactionId} {
+    // 4. INQUIRIES - Anyone creates, Admin manages
+    match /inquiries/{inquiryId=**} {
+      allow create: if true;
       allow read, write: if isAdmin();
     }
 
-    // Rules for Expenses (Admin Only)
-    match /expenses/{expenseId} {
-      allow read, write: if isAdmin();
+    // 5. OTHER COLLECTIONS 
+    match /categories/{id=**} { allow read: if true; allow write: if isAdmin(); }
+    match /services/{id=**} { allow read: if true; allow write: if isAdmin(); }
+    match /portfolio/{id=**} { allow read: if true; allow write: if isAdmin(); }
+    
+    match /expenses/{id=**} { allow read, write: if isAdmin(); }
+    match /transactions/{id=**} { allow read, write: if isAdmin(); }
+    
+    match /admins/{id=**} { allow read: if isSignedIn(); allow write: if isAdmin(); }
+
+    match /activity_logs/{logId=**} {
+      allow read, create: if isAdmin();
     }
 
-    // Rules for Portfolio
-    match /portfolio/{itemId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // 6. DEFAULT DENY
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // 7. TEST CONNECTION
+    match /test/{id} {
+      allow read, write: if true;
     }
   }
 }

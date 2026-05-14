@@ -148,12 +148,12 @@ export function PortfolioManagement() {
                     </div>
                     <div className="space-y-2">
                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Category</label>
-                       <select required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-[#A020F0] outline-none">
-                          <option value="">Select Category</option>
-                          <option value="T-Shirts">T-Shirts</option>
-                          <option value="Tarp">Tarp</option>
-                          <option value="Stickers">Stickers</option>
-                          <option value="Merch">Merch</option>
+                       <select required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-[#0B0F19] border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-[#A020F0] outline-none">
+                          <option value="" className="bg-[#0B0F19] text-white">Select Category</option>
+                          <option value="T-Shirts" className="bg-[#0B0F19] text-white">T-Shirts</option>
+                          <option value="Tarp" className="bg-[#0B0F19] text-white">Tarp</option>
+                          <option value="Stickers" className="bg-[#0B0F19] text-white">Stickers</option>
+                          <option value="Merch" className="bg-[#0B0F19] text-white">Merch</option>
                        </select>
                     </div>
                     <div className="space-y-2">

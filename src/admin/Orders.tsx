@@ -25,7 +25,11 @@ import { Order, OrderStatus } from '../types';
 import { formatDate, formatCurrency, cn } from '../lib/utils';
 import { toast } from 'react-hot-toast';
 
+import { useAuth } from '../context/AuthContext';
+import { logActivity } from '../firebase/logger';
+
 export function OrderTracker() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<OrderStatus | 'All'>('All');
@@ -50,6 +54,7 @@ export function OrderTracker() {
   const handleStatusChange = async (id: string, newStatus: OrderStatus) => {
     try {
       await updateDoc(doc(db, 'orders', id), { status: newStatus });
+      await logActivity(user, 'ORDER_UPDATE', `Updated order #${id.slice(0,8)} status to ${newStatus}`, id, 'order');
       toast.success(`Order updated to ${newStatus}`);
       fetchOrders();
     } catch (error) {
@@ -67,11 +72,23 @@ export function OrderTracker() {
     cancelled: '#EF4444'
   };
 
+  const getProgress = (status: OrderStatus) => {
+    const stages: OrderStatus[] = ['pending', 'confirmed', 'processing', 'printing', 'ready', 'completed'];
+    const index = stages.indexOf(status);
+    if (index === -1) return 0;
+    return ((index + 1) / stages.length) * 100;
+  };
+
   const filteredOrders = orders.filter(o => filter === 'All' || o.status === filter);
 
   return (
     <div className="space-y-8">
-      {/* Filter Tabs */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#0B0F19] border border-white/5 p-6 rounded-3xl mb-8">
+        <div>
+          <h1 className="text-2xl font-black uppercase tracking-tighter">Order Tracker</h1>
+          <p className="text-gray-500 text-sm font-medium">Monitor and update active production workflows.</p>
+        </div>
+      </div>
       <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none">
         {['All', 'pending', 'confirmed', 'processing', 'printing', 'ready', 'completed', 'cancelled'].map((s) => (
           <button
@@ -102,8 +119,17 @@ export function OrderTracker() {
             <motion.div
               key={order.id}
               layout
-              className="p-8 rounded-[32px] bg-[#0B0F19] border border-white/5 hover:border-white/10 transition-all group"
+              className="p-8 rounded-[32px] bg-[#0B0F19] border border-white/5 hover:border-white/10 transition-all group overflow-hidden relative"
             >
+              <div 
+                className="absolute top-0 left-0 h-1 transition-all duration-1000 ease-out z-10"
+                style={{ 
+                  width: `${getProgress(order.status)}%`, 
+                  backgroundColor: statusColors[order.status],
+                  boxShadow: `0 0 10px ${statusColors[order.status]}`
+                }}
+              />
+              
               <div className="flex flex-col lg:flex-row justify-between gap-8">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-4 mb-6">

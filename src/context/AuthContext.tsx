@@ -56,21 +56,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Check if admin
           let isUserAdmin = false;
-          try {
-            const adminDocRef = doc(db, 'admins', authenticatedUser.uid);
-            const adminDoc = await getDoc(adminDocRef);
-            isUserAdmin = adminDoc.exists() || 
-                             authenticatedUser.email === 'jvpaisan@gmail.com' || 
-                             authenticatedUser.email === 'printhiveph.2026@gmail.com' ||
-                             authenticatedUser.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
-                             authenticatedUser.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
-          } catch (adminError) {
-            console.error('Admin check error:', adminError);
-            // Fallback strategy
-            isUserAdmin = authenticatedUser.email === 'jvpaisan@gmail.com' || 
-                          authenticatedUser.email === 'printhiveph.2026@gmail.com' ||
-                          authenticatedUser.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
-                          authenticatedUser.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
+          // Check hardcoded list first to avoid unnecessary Firestore call
+          const isHardcodedAdmin = authenticatedUser.email === 'jvpaisan@gmail.com' || 
+                                  authenticatedUser.email === 'printhiveph.2026@gmail.com' ||
+                                  authenticatedUser.uid === '8Ajzo3JgCre3CXgIwI7entja1yr2' ||
+                                  authenticatedUser.uid === 'ux0ysOYCeTYKFFHO9BCWqrM08f32' ||
+                                  authenticatedUser.uid === 'KtvVHRSr28X8i4b3jd84F4gK7953';
+          
+          if (isHardcodedAdmin) {
+            isUserAdmin = true;
+          } else {
+            try {
+              const adminDocRef = doc(db, 'admins', authenticatedUser.uid);
+              const adminDoc = await getDoc(adminDocRef);
+              isUserAdmin = adminDoc.exists();
+            } catch (adminError: any) {
+              // Only log if it's not a standard permission error for a non-admin user
+              if (adminError.code !== 'permission-denied') {
+                console.error('Admin check error:', adminError);
+              }
+            }
           }
           
           setIsAdmin(isUserAdmin);

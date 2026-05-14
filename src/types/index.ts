@@ -13,6 +13,22 @@ export interface AdminWhitelist {
   email: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  type: 'printing' | 'office' | 'school' | 'merchandise';
+}
+
+export interface Service {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  iconName: string;
+  active: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -21,6 +37,7 @@ export interface Product {
   category: string;
   stock: number;
   imageUrl: string;
+  barcode?: string;
   createdAt: Date;
 }
 

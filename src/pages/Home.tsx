@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Hero } from '../sections/Hero';
 import { Services } from '../sections/Services';
 import { SuppliesOverview } from '../sections/SuppliesOverview';
 import { motion } from 'motion/react';
-import { CheckCircle2, Zap, ShieldCheck, DollarSign, Palette } from 'lucide-react';
+import { CheckCircle2, Zap, ShieldCheck, DollarSign, Palette, ShoppingBag } from 'lucide-react';
+import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../firebase/config';
+import { Product } from '../types';
+import { formatCurrency } from '../lib/utils';
+import { Link } from 'react-router-dom';
 
 const reasons = [
   { icon: <Zap />, title: 'Fast Turnaround', text: 'Get your orders ready in record time without compromising quality.' },
@@ -13,6 +18,25 @@ const reasons = [
 ];
 
 export function Home() {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeatured() {
+      try {
+        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(3));
+        const snapshot = await getDocs(q);
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setFeaturedProducts(items);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.LIST, 'products');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFeatured();
+  }, []);
+
   return (
     <main className="bg-black">
       <Hero />
@@ -56,35 +80,54 @@ export function Home() {
                 <h2 className="text-4xl font-extrabold text-white mb-4">Featured <span className="text-[#FFC107]">Merch</span></h2>
                 <p className="text-gray-400">Popular items from our creative studio.</p>
               </div>
-              <button className="text-[#12A8FF] font-bold hover:underline">View All Products &rarr;</button>
+              <Link to="/supplies" className="text-[#12A8FF] font-bold hover:underline">View All Products &rarr;</Link>
            </div>
 
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                { name: 'Custom Cotton Tee', price: '₱350.00', img: 'shirts' },
-                { name: 'Magic Mug', price: '₱180.00', img: 'mugs' },
-                { name: 'Eco Canvas Tote', price: '₱120.00', img: 'totes' },
-              ].map((item, idx) => (
-                 <motion.div 
-                   key={idx}
-                   whileHover={{ y: -10 }}
-                   className="group bg-white/5 rounded-3xl border border-white/10 overflow-hidden"
-                 >
-                    <div className="aspect-[4/3] bg-gradient-to-br from-white/5 to-transparent flex items-center justify-center p-12 overflow-hidden">
-                       <motion.div 
-                         whileHover={{ scale: 1.1, rotate: 5 }}
-                         className="w-full h-full border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/20 text-xl font-bold"
-                       >
-                          {item.name} Image
-                       </motion.div>
-                    </div>
-                    <div className="p-6">
-                       <h4 className="text-xl font-bold text-white mb-1">{item.name}</h4>
-                       <div className="text-[#FFC107] font-bold">{item.price}</div>
-                    </div>
-                 </motion.div>
-              ))}
-           </div>
+           {loading ? (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+               {[1, 2, 3].map(i => (
+                 <div key={i} className="bg-white/5 rounded-3xl border border-white/10 h-80 animate-pulse" />
+               ))}
+             </div>
+           ) : featuredProducts.length === 0 ? (
+             <div className="text-center py-20 text-gray-700 bg-white/5 rounded-3xl border border-white/5 border-dashed">
+                <ShoppingBag size={64} className="mx-auto mb-6" />
+                <p className="font-bold uppercase tracking-widest">Our catalog is coming soon.</p>
+             </div>
+           ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredProducts.map((item, idx) => (
+                   <motion.div 
+                     key={item.id}
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     transition={{ delay: idx * 0.1 }}
+                     whileHover={{ y: -10 }}
+                     className="group bg-white/5 rounded-3xl border border-white/10 overflow-hidden"
+                   >
+                      <div className="aspect-[4/3] bg-gradient-to-br from-white/5 to-transparent flex items-center justify-center relative overflow-hidden group-hover:p-8 transition-all">
+                        {item.imageUrl ? (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.name} 
+                            className="w-full h-full object-contain transition-transform duration-700 group-hover:rotate-6 scale-90"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-800">
+                             <ShoppingBag size={80} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-8 border-t border-white/5">
+                         <div className="text-[10px] uppercase font-black tracking-widest text-gray-500 mb-2">{item.category}</div>
+                         <h4 className="text-xl font-bold text-white mb-2 line-clamp-1">{item.name}</h4>
+                         <div className="text-[#FFC107] font-black text-lg">{formatCurrency(item.price)}</div>
+                      </div>
+                   </motion.div>
+                ))}
+             </div>
+           )}
         </div>
       </section>
     </main>

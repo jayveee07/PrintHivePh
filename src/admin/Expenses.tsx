@@ -149,13 +149,13 @@ export function Expenses() {
                      </div>
                      <div className="space-y-2">
                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Category</label>
-                        <select required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-red-500 outline-none">
-                           <option value="">Select Category</option>
-                           <option value="Inventory">Inventory</option>
-                           <option value="Operations">Operations</option>
-                           <option value="Rent">Rent</option>
-                           <option value="Marketing">Marketing</option>
-                           <option value="Others">Others</option>
+                        <select required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-[#0B0F19] border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-red-500 outline-none">
+                           <option value="" className="bg-[#0B0F19] text-white">Select Category</option>
+                           <option value="Inventory" className="bg-[#0B0F19] text-white">Inventory</option>
+                           <option value="Operations" className="bg-[#0B0F19] text-white">Operations</option>
+                           <option value="Rent" className="bg-[#0B0F19] text-white">Rent</option>
+                           <option value="Marketing" className="bg-[#0B0F19] text-white">Marketing</option>
+                           <option value="Others" className="bg-[#0B0F19] text-white">Others</option>
                         </select>
                      </div>
                   </div>
