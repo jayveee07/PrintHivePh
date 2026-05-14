@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { signInWithGoogle } from '../firebase/config';
+import { toast } from 'react-hot-toast';
 import { AdminLoginModal } from './AdminLoginModal';
 
 import logo from '../assets/logo.png';
@@ -14,6 +15,19 @@ import logoc from '../assets/logoc.png';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        toast.error('Domain not authorized. Check Firebase Console.');
+      } else if (error.code !== 'auth/popup-closed-by-user') {
+        toast.error('Sign in failed. Please try again.');
+      }
+    }
+  };
+
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -125,7 +139,7 @@ export function Navbar() {
             </Link>
           ) : (
             <button
-              onClick={signInWithGoogle}
+              onClick={handleSignIn}
               className="px-5 py-2 rounded-full bg-gradient-to-r from-[#12A8FF] to-[#A020F0] text-white text-sm font-medium hover:scale-105 transition-all shadow-[0_0_15px_rgba(18,168,255,0.3)]"
             >
               Get Started
@@ -176,10 +190,10 @@ export function Navbar() {
                  </Link>
               ) : (
                 <button
-                  onClick={signInWithGoogle}
+                  onClick={handleSignIn}
                   className="w-full py-3 rounded-lg bg-gradient-to-r from-[#12A8FF] to-[#A020F0] text-white font-medium"
                 >
-                  Join the Hive
+                  Get Started
                 </button>
               )}
             </div>

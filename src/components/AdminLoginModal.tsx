@@ -50,8 +50,12 @@ export function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProps) {
     try {
       await signIn();
       toast.dismiss(tid);
-    } catch (error) {
-      toast.error('Authentication failed', { id: tid });
+    } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        toast.error('Domain not authorized. Please add this domain to Firebase Console.', { id: tid, duration: 6000 });
+      } else {
+        toast.error('Authentication failed', { id: tid });
+      }
       setIsAuthenticating(false);
     }
   };

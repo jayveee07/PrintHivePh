@@ -1,10 +1,27 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Sparkles, Printer, MousePointer2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Printer, MousePointer2, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { signInWithGoogle } from '../firebase/config';
+import { toast } from 'react-hot-toast';
 import coverImg from '../assets/cover.png';
 
 export function Hero() {
+  const { user } = useAuth();
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code === 'auth/unauthorized-domain') {
+        toast.error('Domain not authorized. Check Firebase Console.');
+      } else if (error.code !== 'auth/popup-closed-by-user') {
+        toast.error('Sign in failed. Please try again.');
+      }
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-[#0B0F19]">
       {/* Background Orbs */}
@@ -35,16 +52,26 @@ export function Hero() {
           </p>
           
           <div className="flex flex-wrap gap-4 pt-4">
-            <Link
-              to="/services"
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#12A8FF] to-[#0070FF] text-white font-bold flex items-center gap-2 group hover:shadow-[0_0_25px_rgba(18,168,255,0.4)] transition-all"
-            >
-              Our Services
-              <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            {!user ? (
+              <button
+                onClick={handleSignIn}
+                className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#12A8FF] to-[#A020F0] text-white font-bold flex items-center gap-2 group hover:shadow-[0_0_25px_rgba(18,168,255,0.4)] transition-all"
+              >
+                Get Started
+                <Zap size={18} className="fill-current group-hover:scale-110 transition-transform" />
+              </button>
+            ) : (
+              <Link
+                to="/services"
+                className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#12A8FF] to-[#0070FF] text-white font-bold flex items-center gap-2 group hover:shadow-[0_0_25px_rgba(18,168,255,0.4)] transition-all"
+              >
+                View Services
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            )}
             <Link
               to="/contact"
-              className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all"
+              className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all flex items-center gap-2"
             >
               Get a Quote
             </Link>

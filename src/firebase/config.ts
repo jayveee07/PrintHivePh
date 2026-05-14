@@ -16,7 +16,16 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithGoogle = async () => {
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error: any) {
+    if (error.code === 'auth/unauthorized-domain') {
+      console.error('Firebase Auth Error: unauthorized-domain. Please add ' + window.location.hostname + ' to your Authorized Domains in the Firebase Console.');
+    }
+    throw error;
+  }
+};
 export { signInWithEmailAndPassword };
 
 // Connection test as required by instructions
