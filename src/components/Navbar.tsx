@@ -8,7 +8,7 @@ import { signInWithGoogle } from '../firebase/config';
 import { AdminLoginModal } from './AdminLoginModal';
 
 import logo from '../assets/logoc.png';
-import logonb from '../assets/logonb.png';
+import logonb from '../assets/logo.png';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
