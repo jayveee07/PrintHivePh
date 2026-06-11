@@ -12,6 +12,9 @@ coverage/
 functions/lib/
 functions/node_modules/
 
+# Firebase applet config (contains API keys - never commit)
+firebase-applet-config.json
+
 # Data files (seed JSON, generated data)
 data/
 
