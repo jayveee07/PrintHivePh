@@ -3,35 +3,15 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
 import Markdown from 'react-markdown';
-import { getGenAIClient } from '../lib/gemini';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
-const SYSTEM_INSTRUCTION = `You are the AI Assistant for Print Hive PH, a professional printing service.
-Your goal is to help users with their printing needs.
-
-Print Hive PH Services include:
-- T-Shirt Printing (DTF, Vinyl)
-- Tarpaulin (Large format, banners)
-- Stickers & Labels (Waterproof, vibrant)
-- Flyers & Brochures
-- Business Cards
-- Acrylic Signage (Laser-cut)
-- Invitations (Weddings, Birthdays)
-- Custom Merchandise (Mugs, Tote bags, Pillows)
-
-Workflow:
-1. Vision Capture: Design submission or artist collaboration.
-2. Precision Printing: High-end equipment usage.
-3. Ready for Flight: Quality check and packing.
-
-Tone: Professional, helpful, creative, and slightly tech-forward.
-Style: Use markdown for formatting. Be concise but informative.
-
-If a user asks for a price, tell them they can request a quote via the Contact page or visit the supplies page for specific product prices.`;
+const AI_CHAT_ENDPOINT = import.meta.env.VITE_AI_CHAT_ENDPOINT || '/api/ai-chat';
+const FALLBACK_ERROR_MESSAGE =
+  'I could not reach the Hive AI right now. Please try again in a moment, or contact Print Hive PH directly for urgent requests.';
 
 export function AIChatBot() {
   const location = useLocation();
@@ -66,28 +46,33 @@ export function AIChatBot() {
     setIsLoading(true);
 
     try {
-      const ai = getGenAIClient();
-      const chat = ai.chats.create({
-        model: 'gemini-3-flash-preview',
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
+      const history = messages.slice(1).map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const response = await fetch(AI_CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          message: userMessage,
+          history,
+        }),
       });
 
-      // Format history for the API
-      // Note: gemini-3 series model sendMessage expects a slightly different format if using history,
-      // but for simple chat we can just send the current message or reconstruct history if needed.
-      // Here we just send the new message as a string.
-      
-      const response = await chat.sendMessage({
-        message: userMessage
-      });
+      if (!response.ok) {
+        throw new Error(`AI chat request failed with ${response.status}`);
+      }
 
-      const assistantContent = response.text || "I'm sorry, I couldn't process that request.";
+      const data = await response.json() as { text?: string };
+      const assistantContent = data.text || "I'm sorry, I couldn't process that request.";
+
       setMessages(prev => [...prev, { role: 'assistant', content: assistantContent }]);
     } catch (error) {
-      console.error('Gemini Error:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Error communicating with the Hive mind. Please check your connection or try again later." }]);
+      console.error('Hive AI Error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', content: FALLBACK_ERROR_MESSAGE }]);
     } finally {
       setIsLoading(false);
     }
@@ -181,7 +166,7 @@ export function AIChatBot() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Ask the Hive mind..."
                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-4 pr-12 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#12A8FF]/50 transition-all"
                 />

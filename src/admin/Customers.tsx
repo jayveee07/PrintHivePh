@@ -28,8 +28,8 @@ export function CustomerManagement() {
   };
 
   const filteredCustomers = customers.filter(c => 
-    c.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.displayName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -65,7 +65,13 @@ export function CustomerManagement() {
                 <tr key={customer.uid} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                       <img src={customer.photoURL || undefined} alt="" className="w-10 h-10 rounded-full border border-white/10" />
+                       {customer.photoURL ? (
+                         <img src={customer.photoURL} alt="" className="w-10 h-10 rounded-full border border-white/10" />
+                       ) : (
+                         <div className="w-10 h-10 rounded-full border border-white/10 bg-white/10 flex items-center justify-center text-xs font-bold text-white">
+                           {customer.displayName?.charAt(0) || 'U'}
+                         </div>
+                       )}
                        <span className="font-bold text-white">{customer.displayName}</span>
                     </div>
                   </td>

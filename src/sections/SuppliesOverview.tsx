@@ -2,6 +2,17 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ShoppingCart, GraduationCap, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import yellowPad from '../assets/yellowp.png';
+import pen from '../assets/pen.png';
+import ink from '../assets/ink.png';
+import folder from '../assets/folder.png';
+
+const supplyCards = [
+  { title: 'Yellow Pad', subtitle: 'Premium Quality', image: yellowPad, y: 20, delay: 0, offset: false },
+  { title: 'Vivid Pens', subtitle: 'Smooth Writing', image: pen, y: 40, delay: 0.2, offset: true },
+  { title: 'HP Ink', subtitle: 'Genuine Refills', image: ink, y: 20, delay: 0.1, offset: false },
+  { title: 'Folder Sets', subtitle: 'Durable Storage', image: folder, y: 40, delay: 0.3, offset: true },
+];
 
 export function SuppliesOverview() {
   return (
@@ -50,45 +61,27 @@ export function SuppliesOverview() {
         </motion.div>
         
         <div className="grid grid-cols-2 gap-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="aspect-[4/5] bg-gradient-to-br from-white/5 to-white/0 rounded-2xl border border-white/10 p-6 flex flex-col justify-end"
-          >
-             <div className="text-white font-bold mb-2">Yellow Pad</div>
-             <div className="text-xs text-gray-500">Premium Quality</div>
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="aspect-[4/5] bg-gradient-to-br from-white/5 to-white/0 rounded-2xl border border-white/10 p-6 flex flex-col justify-end translate-y-8"
-          >
-             <div className="text-white font-bold mb-2">Vivid Pens</div>
-             <div className="text-xs text-gray-500">Smooth Writing</div>
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="aspect-[4/5] bg-gradient-to-br from-white/5 to-white/0 rounded-2xl border border-white/10 p-6 flex flex-col justify-end"
-          >
-             <div className="text-white font-bold mb-2">HP Ink</div>
-             <div className="text-xs text-gray-500">Genuine Refills</div>
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="aspect-[4/5] bg-gradient-to-br from-white/5 to-white/0 rounded-2xl border border-white/10 p-6 flex flex-col justify-end translate-y-8"
-          >
-             <div className="text-white font-bold mb-2">Folder Sets</div>
-             <div className="text-xs text-gray-500">Durable Storage</div>
-          </motion.div>
+          {supplyCards.map((card) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: card.y }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: card.delay }}
+              className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col justify-end ${card.offset ? 'translate-y-8' : ''}`}
+            >
+              <img
+                src={card.image}
+                alt={card.title}
+                className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
+              <div className="relative z-10">
+                <div className="text-white font-bold mb-2">{card.title}</div>
+                <div className="text-xs text-gray-300">{card.subtitle}</div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

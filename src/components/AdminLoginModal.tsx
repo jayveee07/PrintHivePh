@@ -32,8 +32,8 @@ export function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProps) {
 
     try {
       await signInWithEmail(email, password);
-      // Success will be handled by useEffect
       toast.dismiss(tid);
+      setIsAuthenticating(false);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || 'Access Denied: Invalid Credentials', { id: tid });
@@ -50,6 +50,7 @@ export function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProps) {
     try {
       await signIn();
       toast.dismiss(tid);
+      setIsAuthenticating(false);
     } catch (error: any) {
       if (error.code === 'auth/unauthorized-domain') {
         toast.error('Domain not authorized. Please add this domain to Firebase Console.', { id: tid, duration: 6000 });

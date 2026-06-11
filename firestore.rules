@@ -35,6 +35,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 2B. BOOKINGS - User creates/tracks own, Admin manages all
+    match /bookings/{bookingId=**} {
+      allow create: if isSignedIn() && request.resource.data.customerId == request.auth.uid;
+      allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
     // 3. USERS - User owns doc, Admin sees all
     match /users/{userId} {
       allow read, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());

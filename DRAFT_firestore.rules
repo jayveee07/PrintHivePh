@@ -51,6 +51,40 @@ service cloud.firestore {
              data.createdAt == request.time;
     }
 
+    function isValidBooking(data) {
+      return data.keys().hasAll([
+        'customerId',
+        'customerName',
+        'email',
+        'phone',
+        'serviceType',
+        'projectTitle',
+        'description',
+        'quantity',
+        'preferredDate',
+        'budget',
+        'status',
+        'adminNote',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().size() == 14 &&
+      data.customerId == request.auth.uid &&
+      data.customerName is string && data.customerName.size() <= 100 &&
+      data.email is string && data.email == request.auth.token.email &&
+      data.phone is string && data.phone.size() <= 30 &&
+      data.serviceType is string && data.serviceType.size() <= 100 &&
+      data.projectTitle is string && data.projectTitle.size() <= 150 &&
+      data.description is string && data.description.size() <= 3000 &&
+      data.quantity is number && data.quantity >= 1 &&
+      data.preferredDate is string && data.preferredDate.size() <= 20 &&
+      data.budget is number && data.budget >= 0 &&
+      data.status == 'pending' &&
+      data.adminNote == '' &&
+      data.createdAt == request.time &&
+      data.updatedAt == request.time;
+    }
+
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt']) &&
              data.keys().size() == 6 &&
@@ -101,6 +135,15 @@ service cloud.firestore {
       allow get: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
       allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
       allow create: if isSignedIn() && incoming().customerId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Rules for Bookings
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create: if isSignedIn() && isValidBooking(incoming());
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }

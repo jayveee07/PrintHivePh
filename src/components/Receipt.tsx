@@ -4,6 +4,7 @@ import { formatCurrency } from '../lib/utils';
 import { Printer } from 'lucide-react';
 
 interface ReceiptProps {
+  transactionId?: string;
   items: CartItem[];
   total: number;
   paymentMethod: string;
@@ -12,26 +13,31 @@ interface ReceiptProps {
   date: Date;
 }
 
-export function Receipt({ items, total, paymentMethod, receivedAmount, change, date }: ReceiptProps) {
+export function Receipt({ transactionId, items, total, paymentMethod, receivedAmount, change, date }: ReceiptProps) {
+  const receiptDate = date instanceof Date ? date : new Date(date);
+
   return (
-    <div className="bg-white p-8 text-black font-mono w-full max-w-[400px] border border-gray-100 flex flex-col items-center">
+    <div className="receipt-print-area bg-white p-8 text-black font-mono w-full max-w-[400px] border border-gray-100 flex flex-col items-center">
       <div className="text-center mb-6 space-y-1">
-        <h2 className="text-2xl font-black uppercase tracking-tighter">PH PRINTS</h2>
+        <h2 className="text-2xl font-black uppercase tracking-tighter">PrintHive PH</h2>
         <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Premium Creative Solutions</p>
-        <p className="text-[10px] text-gray-400">Marikina City, Philippines</p>
+        <p className="text-[10px] text-gray-400">San Jose de Buenavista, Antique Philippines 5700</p>
+        {transactionId && (
+          <p className="text-[10px] text-gray-400 font-bold">TXN-{transactionId.slice(0, 8).toUpperCase()}</p>
+        )}
       </div>
 
       <div className="w-full border-t border-dashed border-gray-300 my-4" />
 
       <div className="w-full space-y-4">
         <div className="flex justify-between text-[10px] font-bold text-gray-400">
-          <span>{date.toLocaleDateString()}</span>
-          <span>{date.toLocaleTimeString()}</span>
+          <span>{receiptDate.toLocaleDateString()}</span>
+          <span>{receiptDate.toLocaleTimeString()}</span>
         </div>
 
         <div className="space-y-3">
           {items.map((item, index) => (
-            <div key={index} className="flex justify-between items-start gap-4">
+            <div key={item.productId || index} className="flex justify-between items-start gap-4">
               <div className="flex-1">
                 <p className="text-xs font-bold leading-tight">{item.name}</p>
                 <p className="text-[10px] text-gray-500">{item.quantity} x {formatCurrency(item.price)}</p>
@@ -66,7 +72,7 @@ export function Receipt({ items, total, paymentMethod, receivedAmount, change, d
         
         <div className="text-center space-y-1">
           <p className="text-[10px] font-bold uppercase tracking-widest">Thank you for your business!</p>
-          <p className="text-[8px] text-gray-400">www.printhiveph.com</p>
+          <p className="text-[8px] text-gray-400">https://printhiveph-20at26.web.app/</p>
         </div>
 
         <div className="flex justify-center pt-4 no-print">

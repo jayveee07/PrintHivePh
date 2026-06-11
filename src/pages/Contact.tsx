@@ -4,6 +4,9 @@ import { Mail, Phone, MapPin, Send, MessageCircle } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
 import { toast } from 'react-hot-toast';
+import cover from '../assets/cover.png';
+
+const messengerUrl = 'https://web.facebook.com/profile.php?id=61589664537961';
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -28,6 +31,7 @@ export function Contact() {
       setFormData({ name: '', email: '', message: '' });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'inquiries');
+      toast.error('Failed to send message. Please try again.', { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -59,14 +63,14 @@ export function Contact() {
                      <Mail size={24} />
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">Email Us</h3>
-                  <p className="text-gray-500 text-sm">hello@printhiveph.com</p>
+                  <p className="text-gray-500 text-sm">printhiveph.2026@gmail.com</p>
                </div>
                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all">
                   <div className="w-12 h-12 rounded-2xl bg-[#FF1493]/10 flex items-center justify-center text-[#FF1493] mb-6">
                      <Phone size={24} />
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">Call Us</h3>
-                  <p className="text-gray-500 text-sm">+(63) 912 345 6789</p>
+                  <p className="text-gray-500 text-sm">+(63) 970 763 9960</p>
                </div>
             </div>
 
@@ -78,13 +82,18 @@ export function Contact() {
                   <div>
                      <h3 className="text-lg font-bold text-white mb-2">Visit Our Studio</h3>
                      <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                        123 Printing Ave, Creative District<br />
-                        Manila, Philippines 1000
+                        San Jose de Buenavista<br />
+                        Antique, Philippines 5700
                      </p>
-                     <div className="w-full h-48 bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
-                        {/* Placeholder for Google Maps */}
-                        <div className="w-full h-full flex items-center justify-center text-gray-700 italic text-sm">
-                           Google Maps Embed
+                     <div className="w-full overflow-hidden rounded-2xl border border-white/10 bg-black">
+                        <img
+                          src={cover}
+                          alt="PrintHive PH studio cover"
+                          className="h-56 w-full object-cover"
+                        />
+                        <div className="border-t border-white/10 bg-black/80 p-4">
+                          <p className="text-xs font-black uppercase tracking-widest text-[#12A8FF] mb-1">Contact Reference</p>
+                          <p className="text-sm text-gray-400">Use our PrintHive PH cover as your visual reference when reaching out about designs, print styles, or custom project direction.</p>
                         </div>
                      </div>
                   </div>
@@ -92,9 +101,14 @@ export function Contact() {
             </div>
 
             <div className="flex gap-4">
-               <button className="flex-1 py-4 rounded-2xl bg-[#12A8FF]/10 text-[#12A8FF] font-bold flex items-center justify-center gap-3 hover:bg-[#12A8FF] hover:text-white transition-all">
+               <a
+                 href={messengerUrl}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="flex-1 py-4 rounded-2xl bg-[#12A8FF]/10 text-[#12A8FF] font-bold flex items-center justify-center gap-3 hover:bg-[#12A8FF] hover:text-white transition-all"
+               >
                   <MessageCircle size={20} /> Messenger
-               </button>
+               </a>
                <button className="flex-1 py-4 rounded-2xl bg-[#FF1493]/10 text-[#FF1493] font-bold flex items-center justify-center gap-3 hover:bg-[#FF1493] hover:text-white transition-all">
                   <Mail size={20} /> Gmail
                </button>

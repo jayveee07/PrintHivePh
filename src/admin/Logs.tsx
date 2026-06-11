@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
 import { motion } from 'motion/react';
-import { Clock, User, Info, Database, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, Info, Database, RefreshCw, Search, Filter, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface ActivityLog {
@@ -23,10 +23,30 @@ interface ActivityLog {
   targetType?: string;
 }
 
+const actionOptions = [
+  'All',
+  'STOCK_UPDATE',
+  'PRODUCT_CREATE',
+  'PRODUCT_UPDATE',
+  'PRODUCT_DELETE',
+  'POS_SALE',
+  'ORDER_UPDATE',
+  'BOOKING_UPDATE',
+  'BOOKING_NOTE',
+  'EXPENSE_ADD',
+  'CATEGORY_CHANGE',
+];
+
+const targetTypeOptions = ['All', 'product', 'transaction', 'order', 'booking', 'category', 'expense'];
+
 export function SystemLogs() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [actionFilter, setActionFilter] = useState('All');
+  const [targetTypeFilter, setTargetTypeFilter] = useState('All');
+  const [adminFilter, setAdminFilter] = useState('All');
 
   useEffect(() => {
     fetchLogs();
@@ -69,6 +89,32 @@ export function SystemLogs() {
     return 'text-gray-400 bg-gray-400/10';
   };
 
+  const adminOptions = ['All', ...Array.from(new Set(logs.map(log => log.adminEmail).filter(Boolean)))];
+
+  const filteredLogs = logs.filter(log => {
+    const search = searchTerm.toLowerCase();
+    const matchesSearch =
+      !search ||
+      log.action.toLowerCase().includes(search) ||
+      log.details.toLowerCase().includes(search) ||
+      log.adminEmail.toLowerCase().includes(search) ||
+      (log.targetType || '').toLowerCase().includes(search);
+    const matchesAction = actionFilter === 'All' || log.action === actionFilter;
+    const matchesTargetType = targetTypeFilter === 'All' || log.targetType === targetTypeFilter;
+    const matchesAdmin = adminFilter === 'All' || log.adminEmail === adminFilter;
+
+    return matchesSearch && matchesAction && matchesTargetType && matchesAdmin;
+  });
+
+  const hasActiveFilters = searchTerm || actionFilter !== 'All' || targetTypeFilter !== 'All' || adminFilter !== 'All';
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setActionFilter('All');
+    setTargetTypeFilter('All');
+    setAdminFilter('All');
+  };
+
   return (
     <div className="space-y-8 pb-12">
       <div className="flex justify-between items-center">
@@ -85,11 +131,74 @@ export function SystemLogs() {
       </div>
 
       <div className="bg-[#0B0F19] border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
-        <div className="p-8 border-b border-white/5 flex items-center gap-3">
-           <div className="w-10 h-10 rounded-xl bg-[#12A8FF]/10 text-[#12A8FF] flex items-center justify-center">
-              <Database size={20} />
+        <div className="p-8 border-b border-white/5 space-y-6">
+           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#12A8FF]/10 text-[#12A8FF] flex items-center justify-center">
+                    <Database size={20} />
+                </div>
+                <span className="text-sm font-black uppercase tracking-[0.2em]">Live Operation Stream</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest">
+                <Filter size={14} />
+                {filteredLogs.length} of {logs.length} shown
+              </div>
            </div>
-           <span className="text-sm font-black uppercase tracking-[0.2em]">Live Operation Stream</span>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search logs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm text-white outline-none focus:border-[#12A8FF]"
+                />
+              </div>
+              <select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-sm text-white outline-none focus:border-[#12A8FF]"
+              >
+                {actionOptions.map(action => (
+                  <option key={action} value={action} className="bg-[#0B0F19]">
+                    {action === 'All' ? 'All Actions' : action}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={targetTypeFilter}
+                onChange={(e) => setTargetTypeFilter(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-sm text-white outline-none focus:border-[#12A8FF]"
+              >
+                {targetTypeOptions.map(type => (
+                  <option key={type} value={type} className="bg-[#0B0F19]">
+                    {type === 'All' ? 'All Targets' : type}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={adminFilter}
+                onChange={(e) => setAdminFilter(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-sm text-white outline-none focus:border-[#12A8FF]"
+              >
+                {adminOptions.map(admin => (
+                  <option key={admin} value={admin} className="bg-[#0B0F19]">
+                    {admin === 'All' ? 'All Admins' : admin}
+                  </option>
+                ))}
+              </select>
+           </div>
+
+           {hasActiveFilters && (
+             <button
+               onClick={clearFilters}
+               className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white transition-colors"
+             >
+               <X size={14} /> Clear filters
+             </button>
+           )}
         </div>
 
         <div className="divide-y divide-white/5">
@@ -99,8 +208,10 @@ export function SystemLogs() {
             </div>
           ) : logs.length === 0 ? (
             <div className="p-20 text-center text-gray-600 italic">No activity recorded.</div>
+          ) : filteredLogs.length === 0 ? (
+            <div className="p-20 text-center text-gray-600 italic">No logs match the selected filters.</div>
           ) : (
-            logs.map((log, idx) => (
+            filteredLogs.map((log, idx) => (
               <motion.div 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}

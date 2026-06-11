@@ -16,6 +16,7 @@ import { Portfolio } from './pages/Portfolio';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
 import { Profile } from './pages/Profile';
+import { Bookings } from './pages/Bookings';
 
 // Admin Pages
 import { AdminLayout } from './admin/AdminLayout';
@@ -31,6 +32,7 @@ import { Expenses } from './admin/Expenses';
 import { Categories } from './admin/Categories';
 import { ServicesAdmin } from './admin/Services';
 import { SystemLogs } from './admin/Logs';
+import { BookingManagement } from './admin/Bookings';
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -81,6 +83,7 @@ export default function App() {
           <Route path="/portfolio" element={<><Navbar /><Portfolio /><Footer /></>} />
           <Route path="/about" element={<><Navbar /><About /><Footer /></>} />
           <Route path="/contact" element={<><Navbar /><Contact /><Footer /></>} />
+          <Route path="/bookings" element={<><Navbar /><Bookings /><Footer /></>} />
           <Route path="/profile" element={<><Navbar /><Profile /><Footer /></>} />
           
           {/* Admin Routes */}
@@ -91,6 +94,7 @@ export default function App() {
              <Route path="services" element={<ServicesAdmin />} />
              <Route path="categories" element={<Categories />} />
              <Route path="orders" element={<OrderTracker />} />
+             <Route path="bookings" element={<BookingManagement />} />
              <Route path="customers" element={<CustomerManagement />} />
              <Route path="analytics" element={<Analytics />} />
              <Route path="portfolio" element={<PortfolioManagement />} />

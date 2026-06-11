@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { LogOut, Shield, Mail, Calendar, Package, Clock } from 'lucide-react';
 import { formatDate, formatCurrency, cn } from '../lib/utils';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Order } from '../types';
@@ -20,10 +21,9 @@ export function Profile() {
 
   const fetchMyOrders = async () => {
     try {
-      // Query orders by email (since that's what we have)
       const q = query(
         collection(db, 'orders'), 
-        where('email', '==', user?.email),
+        where('customerId', '==', user?.uid),
         orderBy('createdAt', 'desc'),
         limit(5)
       );
@@ -57,7 +57,13 @@ export function Profile() {
             <div className="h-24 bg-gradient-to-r from-[#12A8FF] via-[#FF1493] to-[#A020F0]" />
             <div className="px-8 pb-8">
                 <div className="relative -top-8 flex justify-center">
-                  <img src={user.photoURL || undefined} alt="" className="w-20 h-20 rounded-full border-4 border-black" />
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="" className="w-20 h-20 rounded-full border-4 border-black" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full border-4 border-black bg-white/10 flex items-center justify-center text-2xl font-bold text-white">
+                      {user.displayName?.charAt(0) || 'U'}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="text-center -mt-6 mb-8">
@@ -150,8 +156,8 @@ export function Profile() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2 pt-4 border-t border-white/5">
-                         {order.items.map((item, idx) => (
-                           <span key={idx} className="text-[10px] bg-white/5 px-2 py-1 rounded text-gray-400">
+                         {(order.items || []).map((item, idx) => (
+                            <span key={item.productId || idx} className="text-[10px] bg-white/5 px-2 py-1 rounded text-gray-400">
                              {item.quantity}x {item.name}
                            </span>
                          ))}
@@ -167,5 +173,3 @@ export function Profile() {
   );
 }
 
-// Dummy Link component just in case React Router Link is needed
-import { Link } from 'react-router-dom';

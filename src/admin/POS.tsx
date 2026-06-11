@@ -1,24 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
-  Trash2, 
   Plus, 
   Minus, 
   CreditCard, 
   Banknote, 
   X,
-  PlusCircle,
   Printer,
   ChevronRight,
   ShoppingCart,
   ShoppingBag,
-  Maximize2,
   Scan,
   Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, query, getDocs, addDoc, serverTimestamp, updateDoc, doc, increment, orderBy } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase/config';
+import { collection, query, getDocs, addDoc, serverTimestamp, doc, increment, orderBy, writeBatch } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { Product, CartItem, Transaction, Service, Category } from '../types';
 import { formatCurrency, cn, playScannerBeep } from '../lib/utils';
 import { toast } from 'react-hot-toast';
@@ -27,6 +24,18 @@ import { Receipt } from '../components/Receipt';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { useAuth } from '../context/AuthContext';
 import { logActivity } from '../firebase/logger';
+
+const getErrorMessage = (error: any, fallback: string) => {
+  if (error?.code === 'permission-denied') {
+    return 'Permission denied. You must be an authorized admin.';
+  }
+  return error?.message || fallback;
+};
+
+type PosInventoryItem = Product & {
+  isService: boolean;
+  itemType: 'product' | 'service';
+};
 
 export function POS() {
   const { user } = useAuth();
@@ -40,8 +49,9 @@ export function POS() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState('');
-  const [lastTransaction, setLastTransaction] = useState<any>(null);
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [receivedAmount, setReceivedAmount] = useState<string>('');
   const [quickAddForm, setQuickAddForm] = useState({
     name: '',
@@ -73,6 +83,16 @@ export function POS() {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    if (!isReceiptOpen || !lastTransaction) return;
+
+    const printTimer = window.setTimeout(() => {
+      window.print();
+    }, 500);
+
+    return () => window.clearTimeout(printTimer);
+  }, [isReceiptOpen, lastTransaction]);
+
   const fetchCategories = async () => {
     try {
       const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
@@ -97,49 +117,74 @@ export function POS() {
     try {
       const q = query(collection(db, 'products'));
       const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      const items = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        stock: doc.data().stock || 0,
+      } as Product));
+      console.log('Fetched products:', items.length, items);
       setProducts(items);
-    } catch (error) {
-       handleFirestoreError(error, OperationType.GET, 'products');
+    } catch (error: any) {
+       console.error('Error fetching products:', error);
+       toast.error(getErrorMessage(error, 'Failed to load products'));
     }
   };
 
-  const addToCart = (item: Product | Service) => {
-    const isService = 'active' in item;
+  const addToCart = (item: PosInventoryItem) => {
+    const isService = item.itemType === 'service';
     
-    if (!isService && (item as Product).stock <= 0) {
+    if (!isService && item.stock <= 0) {
       toast.error('Product is out of stock');
       return;
     }
 
     const existing = cart.find(c => c.productId === item.id);
     if (existing) {
-      if (!isService && existing.quantity >= (item as Product).stock) {
+      if (!isService && existing.quantity >= item.stock) {
         toast.error('No more stock available');
         return;
       }
-      setCart(cart.map(c => 
-        c.productId === item.id 
-          ? { ...c, quantity: c.quantity + (isService ? 1 : 1) } 
-          : c
-      ));
+      setCart(prevCart =>
+        prevCart.map(c =>
+          c.productId === item.id
+            ? { ...c, quantity: c.quantity + 1 }
+            : c
+        )
+      );
     } else {
-      setCart([...cart, { 
-        productId: item.id, 
-        name: isService ? (item as Service).title : (item as Product).name, 
-        price: item.price, 
-        quantity: 1 
-      }]);
+      setCart(prevCart => ([
+        ...prevCart,
+        {
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          itemType: item.itemType,
+        },
+      ]));
     }
     focusSearch();
   };
 
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    const price = Number(quickAddForm.price);
+    const stock = Number.parseInt(quickAddForm.stock, 10);
+
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error('Please enter a valid price');
+      return;
+    }
+
+    if (!Number.isInteger(stock) || stock < 1) {
+      toast.error('Please enter a valid stock quantity');
+      return;
+    }
+
     const newProduct = {
       ...quickAddForm,
-      price: parseFloat(quickAddForm.price),
-      stock: parseInt(quickAddForm.stock),
+      price,
+      stock,
       barcode: scannedBarcode,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -152,13 +197,14 @@ export function POS() {
       const created = { id: docRef.id, ...newProduct } as unknown as Product;
       await logActivity(user, 'PRODUCT_CREATE', `Quick added product from POS: ${newProduct.name}`, docRef.id, 'product');
       setProducts(prev => [...prev, created]);
-      addToCart(created);
+      addToCart({ ...created, isService: false, itemType: 'product' });
       setIsQuickAddOpen(false);
       setQuickAddForm({ name: '', price: '', stock: '1', category: '' });
       toast.success('Product added & added to cart!');
       playScannerBeep();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'products');
+    } catch (error: any) {
+      console.error('Error quick adding product:', error);
+      toast.error(getErrorMessage(error, 'Failed to add product'));
     }
   };
 
@@ -166,7 +212,7 @@ export function POS() {
     if (e.key === 'Enter' && searchTerm) {
       const exactMatch = products.find(p => p.barcode === searchTerm || p.name.toLowerCase() === searchTerm.toLowerCase());
       if (exactMatch) {
-        addToCart(exactMatch);
+        addToCart({ ...exactMatch, isService: false, itemType: 'product' });
         playScannerBeep();
         setSearchTerm('');
         toast.success(`Scanned: ${exactMatch.name}`);
@@ -180,20 +226,29 @@ export function POS() {
   };
 
   const updateQuantity = (id: string, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.productId === id) {
-        const newQty = Math.max(0, item.quantity + delta);
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
+    setCart(prevCart =>
+      prevCart
+        .map(item => {
+          if (item.productId !== id) return item;
+          const newQty = Math.max(0, item.quantity + delta);
+          if (item.itemType === 'product') {
+            const product = products.find(p => p.id === item.productId);
+            if (product && newQty > product.stock) {
+              toast.error('No more stock available');
+              return item;
+            }
+          }
+          return { ...item, quantity: newQty };
+        })
+        .filter(item => item.quantity > 0)
+    );
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const change = Math.max(0, parseFloat(receivedAmount || '0') - cartTotal);
 
-  const mergedInventory = [
-    ...products.map(p => ({ ...p, isService: false })),
+  const mergedInventory: PosInventoryItem[] = [
+    ...products.map(p => ({ ...p, isService: false, itemType: 'product' as const })),
     ...services.map(s => ({ 
       id: s.id, 
       name: s.title, 
@@ -202,20 +257,27 @@ export function POS() {
       stock: 99999, // Services don't follow stock
       imageUrl: '', 
       description: s.description,
-      isService: true
+      barcode: undefined,
+      createdAt: new Date(0),
+      isService: true,
+      itemType: 'service' as const,
     }))
   ];
 
-  const filteredItems = mergedInventory.filter(item => 
-    (category === 'All' || item.category === category) &&
-    (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     (!item.isService && (item as any).barcode === searchTerm))
-  );
+  const filteredItems = mergedInventory.filter(item => {
+    const categoryMatch = category === 'All' || item.category === category;
+    const searchMatch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+     (!item.isService && (item.barcode?.includes(searchTerm) || searchTerm === ''));
+    const passes = categoryMatch && (searchTerm === '' ? true : searchMatch);
+    return passes;
+  });
+
+  console.log('Filtered Items:', filteredItems.length, filteredItems);
 
   const handleBarcodeScan = (code: string) => {
     const product = products.find(p => p.barcode === code);
     if (product) {
-      addToCart(product);
+      addToCart({ ...product, isService: false, itemType: 'product' });
       playScannerBeep();
       toast.success(`Scanned: ${product.name}`);
     } else {
@@ -224,50 +286,64 @@ export function POS() {
     }
   };
 
-  const posCategories = ['All', ...new Set(mergedInventory.map(item => item.category))];
+  const posCategories = ['All', ...new Set(mergedInventory.map(item => item.category).filter(Boolean))];
 
   const handleCheckout = async () => {
+    if (isProcessingCheckout) return;
     if (cart.length === 0) return;
     if (paymentMethod === 'cash' && parseFloat(receivedAmount || '0') < cartTotal) {
       toast.error('Insufficient amount received');
       return;
     }
 
+    setIsProcessingCheckout(true);
     const toastId = toast.loading('Processing transaction...');
     try {
-      // 1. Create Transaction record
+      const finalReceivedAmount = paymentMethod === 'cash' ? parseFloat(receivedAmount || '0') : cartTotal;
+      const finalChange = paymentMethod === 'cash' ? change : 0;
+
       const transactionData = {
         items: cart,
         total: cartTotal,
         paymentMethod,
-        receivedAmount: parseFloat(receivedAmount || '0'),
-        change,
+        receivedAmount: finalReceivedAmount,
+        change: finalChange,
+        adminId: user?.uid || '',
         createdAt: serverTimestamp(),
       };
+      const batch = writeBatch(db);
+      const transactionRef = doc(collection(db, 'transactions'));
       
-      const docRef = await addDoc(collection(db, 'transactions'), transactionData);
-      await logActivity(user, 'POS_SALE', `POS Transaction processed: ${formatCurrency(cartTotal)}`, docRef.id, 'transaction');
-
-      // 2. Update stock for each product (only for products, skip services)
+      batch.set(transactionRef, transactionData);
       for (const item of cart) {
-        const isProduct = products.some(p => p.id === item.productId);
-        if (isProduct) {
+        if (item.itemType === 'product') {
+          const product = products.find(p => p.id === item.productId);
+          if (!product || product.stock < item.quantity) {
+            throw new Error(`${item.name} does not have enough stock.`);
+          }
+
           const productRef = doc(db, 'products', item.productId);
-          await updateDoc(productRef, {
+          batch.update(productRef, {
             stock: increment(-item.quantity)
           });
         }
       }
 
-      setLastTransaction({ ...transactionData, id: docRef.id, createdAt: new Date() });
+      await batch.commit();
+      await logActivity(user, 'POS_SALE', `POS Transaction processed: ${formatCurrency(cartTotal)}`, transactionRef.id, 'transaction');
+
+      setLastTransaction({ ...transactionData, id: transactionRef.id, createdAt: new Date() });
       toast.success('Transaction completed!', { id: toastId });
       setCart([]);
       setReceivedAmount('');
       setIsCheckoutOpen(false);
       setIsReceiptOpen(true);
       fetchProducts(); // Refresh stock
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'transactions');
+    } catch (error: any) {
+      console.error('Error processing transaction:', error);
+      toast.error(getErrorMessage(error, 'Failed to process transaction'), { id: toastId });
+    } finally {
+      setIsProcessingCheckout(false);
     }
   };
 
@@ -304,6 +380,7 @@ export function POS() {
                   "px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all",
                   category === cat ? "bg-[#12A8FF] text-white" : "bg-white/5 text-gray-400 hover:bg-white/10"
                 )}
+                title={`${cat} (${mergedInventory.filter(i => i.category === cat).length})`}
               >
                 {cat}
               </button>
@@ -313,36 +390,52 @@ export function POS() {
 
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map(item => (
-              <motion.button
-                key={item.id}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => addToCart(item as any)}
-                className="p-4 rounded-3xl bg-[#0B0F19] border border-white/5 hover:border-[#12A8FF]/50 transition-all text-left flex flex-col h-full group"
-              >
-                <div className="aspect-square bg-white/5 rounded-2xl mb-4 overflow-hidden relative">
-                   {item.imageUrl ? (
-                     <img src={item.imageUrl || undefined} alt={item.name} className="w-full h-full object-cover" />
-                   ) : (
-                     <div className="w-full h-full flex items-center justify-center text-gray-700">
-                        {item.isService ? <Package size={40} /> : <ShoppingBag size={40} />}
-                     </div>
-                   )}
-                   {!item.isService && (
-                    <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold text-white">
-                        STOCK: {item.stock}
-                    </div>
-                   )}
+            {filteredItems.length === 0 ? (
+              <div className="col-span-full">
+                <div className="text-center py-12 text-gray-500">
+                  <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-sm mb-4">
+                    {products.length === 0 
+                      ? `📦 Loading products (${mergedInventory.length} total)...` 
+                      : `❌ No products found - Products: ${products.length}, Merged: ${mergedInventory.length}, Filtered: ${filteredItems.length}`}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Category: {category} | Search: "{searchTerm}"
+                  </p>
                 </div>
-                <h4 className="text-sm font-bold text-white mb-1 line-clamp-2">{item.name}</h4>
-                <div className="mt-auto flex justify-between items-center">
-                  <span className="text-[#12A8FF] font-black">{formatCurrency(item.price)}</span>
-                  <div className="w-8 h-8 rounded-full bg-[#12A8FF]/10 flex items-center justify-center text-[#12A8FF] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Plus size={16} />
+              </div>
+            ) : (
+              filteredItems.map(item => (
+                <motion.button
+                  key={item.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => addToCart(item)}
+                  className="p-4 rounded-3xl bg-[#0B0F19] border border-white/5 hover:border-[#12A8FF]/50 transition-all text-left flex flex-col h-full group"
+                >
+                  <div className="aspect-square bg-white/5 rounded-2xl mb-4 overflow-hidden relative">
+                     {item.imageUrl ? (
+                       <img src={item.imageUrl || undefined} alt={item.name} className="w-full h-full object-cover" />
+                     ) : (
+                       <div className="w-full h-full flex items-center justify-center text-gray-700">
+                          {item.isService ? <Package size={40} /> : <ShoppingBag size={40} />}
+                       </div>
+                     )}
+                     {!item.isService && (
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold text-white">
+                          STOCK: {item.stock}
+                      </div>
+                     )}
                   </div>
-                </div>
-              </motion.button>
-            ))}
+                  <h4 className="text-sm font-bold text-white mb-1 line-clamp-2">{item.name}</h4>
+                  <div className="mt-auto flex justify-between items-center">
+                    <span className="text-[#12A8FF] font-black">{formatCurrency(item.price)}</span>
+                    <div className="w-8 h-8 rounded-full bg-[#12A8FF]/10 flex items-center justify-center text-[#12A8FF] opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus size={16} />
+                    </div>
+                  </div>
+                </motion.button>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -500,9 +593,10 @@ export function POS() {
 
                 <button
                   onClick={handleCheckout}
-                  className="w-full py-6 rounded-2xl bg-gradient-to-r from-[#12A8FF] to-[#A020F0] text-white text-xl font-bold hover:shadow-[0_0_30px_rgba(18,168,255,0.4)] transition-all flex items-center justify-center gap-4 group"
+                  disabled={isProcessingCheckout}
+                  className="w-full py-6 rounded-2xl bg-gradient-to-r from-[#12A8FF] to-[#A020F0] text-white text-xl font-bold hover:shadow-[0_0_30px_rgba(18,168,255,0.4)] transition-all flex items-center justify-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Confirm & Pay <Printer size={24} className="group-hover:rotate-12 transition-transform" />
+                  {isProcessingCheckout ? 'Processing...' : 'Confirm & Pay'} <Printer size={24} className="group-hover:rotate-12 transition-transform" />
                 </button>
               </div>
             </motion.div>
@@ -534,6 +628,7 @@ export function POS() {
               </div>
               <div className="overflow-auto max-h-[90vh] custom-scrollbar rounded-3xl">
                 <Receipt 
+                    transactionId={lastTransaction.id}
                     items={lastTransaction.items}
                     total={lastTransaction.total}
                     paymentMethod={lastTransaction.paymentMethod}

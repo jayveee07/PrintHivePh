@@ -10,6 +10,8 @@ export type ActivityAction =
   | 'POS_SALE' 
   | 'ORDER_STATUS_CHANGE'
   | 'ORDER_UPDATE'
+  | 'BOOKING_UPDATE'
+  | 'BOOKING_NOTE'
   | 'EXPENSE_ADD'
   | 'CATEGORY_CHANGE';
 

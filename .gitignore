@@ -6,3 +6,17 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Firebase
+.firebase/
+functions/lib/
+functions/node_modules/
+
+# Data files (seed JSON, generated data)
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

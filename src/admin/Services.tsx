@@ -28,7 +28,7 @@ import {
   query,
   orderBy
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase/config';
+import { db } from '../firebase/config';
 import { Service } from '../types';
 import { toast } from 'react-hot-toast';
 
@@ -42,6 +42,13 @@ const icons = [
   { name: 'mail', icon: <Mail size={20} /> },
   { name: 'gift', icon: <Gift size={20} /> },
 ];
+
+const getErrorMessage = (error: any, fallback: string) => {
+  if (error?.code === 'permission-denied') {
+    return 'Permission denied. You must be an authorized admin.';
+  }
+  return error?.message || fallback;
+};
 
 export function ServicesAdmin() {
   const [services, setServices] = useState<Service[]>([]);
@@ -71,8 +78,9 @@ export function ServicesAdmin() {
         ...doc.data()
       })) as Service[];
       setServices(serviceData);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.LIST, 'services');
+    } catch (error: any) {
+      console.error('Error fetching services:', error);
+      toast.error(getErrorMessage(error, 'Failed to load services'));
     } finally {
       setLoading(false);
     }
@@ -99,8 +107,9 @@ export function ServicesAdmin() {
       fetchServices();
       setFormData({ title: '', description: '', price: '', category: 'printing', iconName: 'shirt', active: true });
       setEditingService(null);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'services');
+    } catch (error: any) {
+      console.error('Error saving service:', error);
+      toast.error(getErrorMessage(error, 'Failed to save service'));
     } finally {
       setLoading(false);
     }
@@ -126,8 +135,9 @@ export function ServicesAdmin() {
       await deleteDoc(doc(db, 'services', id));
       toast.success('Service deleted');
       fetchServices();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `services/${id}`);
+    } catch (error: any) {
+      console.error('Error deleting service:', error);
+      toast.error(getErrorMessage(error, 'Failed to delete service'));
     }
   };
 
@@ -136,8 +146,9 @@ export function ServicesAdmin() {
       await updateDoc(doc(db, 'services', service.id), { active: !service.active });
       fetchServices();
       toast.success(`Service ${!service.active ? 'activated' : 'deactivated'}`);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `services/${service.id}`);
+    } catch (error: any) {
+      console.error('Error updating service status:', error);
+      toast.error(getErrorMessage(error, 'Failed to update service'));
     }
   };
 

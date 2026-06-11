@@ -9,6 +9,8 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
 
   useEffect(() => {
     // Create scanner instance
@@ -24,11 +26,11 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     scanner.render(
       (decodedText) => {
-        onScan(decodedText);
+        onScanRef.current(decodedText);
         // We don't stop immediately if the user wants to scan multiple items
       },
-      (error) => {
-        // Handle error if needed (silencing common errors like "No QR code found")
+      () => {
+        // Silencing common errors like "No QR code found"
       }
     );
 
@@ -40,7 +42,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         scannerRef.current.clear().catch(err => console.error("Failed to clear scanner", err));
       }
     };
-  }, [onScan]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40">

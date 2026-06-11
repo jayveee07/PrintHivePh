@@ -69,9 +69,9 @@ export function Inquiries() {
   };
 
   const filteredInquiries = inquiries.filter(i => 
-    i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.message.toLowerCase().includes(searchTerm.toLowerCase())
+    (i.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (i.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (i.message || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

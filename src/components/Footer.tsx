@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import logor from '../assets/logor.png';
 
+const facebookUrl = 'https://web.facebook.com/profile.php?id=61589664537961';
+
 export function Footer() {
   return (
     <footer className="bg-black border-t border-white/10 pt-16 pb-8 px-6">
@@ -19,7 +21,12 @@ export function Footer() {
             Revolutionizing the printing industry with futuristic tech and creative passion. Your vision, expertly printed.
           </p>
           <div className="flex gap-4">
-            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-[#12A8FF] hover:text-white transition-all">
+            <a
+              href={facebookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-[#12A8FF] hover:text-white transition-all"
+            >
               <Facebook size={18} />
             </a>
             <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-[#FF1493] hover:text-white transition-all">
@@ -63,15 +70,15 @@ export function Footer() {
           <ul className="space-y-4">
             <li className="flex items-center gap-3 text-gray-400 text-sm">
               <Phone size={16} className="text-[#12A8FF]" />
-              +(63) 912 345 6789
+              +(63) 970 763 9960
             </li>
             <li className="flex items-center gap-3 text-gray-400 text-sm">
               <Mail size={16} className="text-[#FF1493]" />
-              hello@printhiveph.com
+              printhiveph.2026@gmail.com
             </li>
             <li className="flex items-center gap-3 text-gray-400 text-sm">
               <MapPin size={16} className="text-[#A020F0]" />
-              Manila, Philippines
+              San Jose de Buenavista, Antique Philippines 5700
             </li>
           </ul>
         </div>

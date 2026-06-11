@@ -153,8 +153,8 @@ export function OrderTracker() {
                     <div>
                       <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Order Details</h4>
                       <ul className="space-y-2">
-                        {order.items.map((item, idx) => (
-                          <li key={idx} className="text-sm text-gray-300 flex justify-between">
+                        {(order.items || []).map((item, idx) => (
+                          <li key={item.productId || idx} className="text-sm text-gray-300 flex justify-between">
                              <span>{item.quantity}x {item.name}</span>
                              <span className="text-gray-500">{formatCurrency(item.price * item.quantity)}</span>
                           </li>

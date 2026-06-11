@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, signInWithGoogle, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase/config';
+import { auth, db, signInWithGoogle, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../firebase/config';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
@@ -112,7 +112,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Note: This only works if Email/Password sign-up is enabled in Firebase Console
         if (email === 'printhiveph.2026@gmail.com') {
            try {
-             const { createUserWithEmailAndPassword } = await import('firebase/auth');
              await createUserWithEmailAndPassword(auth, email, pass);
              return;
            } catch (createError) {

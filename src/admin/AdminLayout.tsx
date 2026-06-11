@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -18,7 +18,8 @@ import {
   Package,
   Tag,
   AlertCircle,
-  Database
+  Database,
+  CalendarCheck
 } from 'lucide-react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
@@ -31,10 +32,12 @@ import logor from '../assets/logor.png';
 export function AdminLayout() {
   const { isAdmin, loading, signOut, user, profile } = useAuth();
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(true);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -55,11 +58,32 @@ export function AdminLayout() {
       handleFirestoreError(error, OperationType.GET, 'orders_pending_watch');
     });
 
+    const qBookings = query(collection(db, 'bookings'), where('status', '==', 'pending'));
+    const unsubBookings = onSnapshot(qBookings, (snapshot) => {
+      setPendingBookingsCount(snapshot.size);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'bookings_pending_watch');
+    });
+
     return () => {
       unsubStock();
       unsubOrders();
+      unsubBookings();
     };
   }, [isAdmin]);
+
+  const handleLogout = async () => {
+    if (!window.confirm('Are you sure you want to log out of the admin dashboard?')) return;
+    setIsLoginModalOpen(false);
+    await signOut();
+    navigate('/');
+  };
+
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
@@ -104,6 +128,7 @@ export function AdminLayout() {
     { name: 'Services', icon: <Package size={20} />, href: '/admin/services' },
     { name: 'Categories', icon: <Tag size={20} />, href: '/admin/categories' },
     { name: 'Orders', icon: <Layers size={20} />, href: '/admin/orders', badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, badgeColor: 'bg-[#A020F0]' },
+    { name: 'Bookings', icon: <CalendarCheck size={20} />, href: '/admin/bookings', badge: pendingBookingsCount > 0 ? pendingBookingsCount : null, badgeColor: 'bg-[#12A8FF]' },
     { name: 'Customers', icon: <Users size={20} />, href: '/admin/customers' },
     { name: 'Analytics', icon: <PieChart size={20} />, href: '/admin/analytics' },
     { name: 'Portfolio', icon: <Briefcase size={20} />, href: '/admin/portfolio' },
@@ -114,16 +139,26 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-[#06080E] text-white flex">
+      {/* Mobile Backdrop */}
+      <div
+        className={cn(
+          "lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity",
+          isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 bg-[#0B0F19] border-r border-white/5 transition-all duration-300",
-          isSidebarOpen ? "w-64" : "w-0 lg:w-20 overflow-hidden"
+          "fixed lg:static inset-y-0 left-0 z-50 bg-[#0B0F19] border-r border-white/5 transition-transform duration-300",
+          // Mobile drawer width is fixed; we slide in/out.
+          isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:translate-x-0 lg:w-20 overflow-hidden"
         )}
       >
-        <div className="flex flex-col h-full p-4">
-          <div className="flex items-center gap-3 mb-10 px-2">
-            <Link to="/" className="flex items-center gap-3">
+        <div className="flex h-full min-h-0 flex-col p-4">
+          <div className="flex items-center gap-3 mb-6 px-2 shrink-0">
+            <Link to="/" onClick={closeSidebarOnMobile} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                  <img src={logor} alt="Logo" className="w-full h-full object-contain p-1.5" />
               </div>
@@ -136,11 +171,12 @@ export function AdminLayout() {
             </Link>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 min-h-0 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
             {menuItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={closeSidebarOnMobile}
                 className={cn(
                   "flex items-center gap-4 px-4 py-3 rounded-xl transition-all group",
                   location.pathname === item.href 
@@ -175,6 +211,7 @@ export function AdminLayout() {
             <div className="h-px bg-white/5 my-4" />
             <Link
               to="/"
+              onClick={closeSidebarOnMobile}
               className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-500 hover:bg-white/5 hover:text-white transition-all group"
             >
               <ExternalLink size={20} className="group-hover:text-[#FF1493]" />
@@ -183,8 +220,8 @@ export function AdminLayout() {
           </nav>
 
           <button 
-            onClick={() => signOut()}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all mt-auto"
+            onClick={handleLogout}
+            className="mt-4 flex shrink-0 items-center gap-4 rounded-xl border border-red-500/20 px-4 py-3 text-red-400 transition-all hover:bg-red-500/10 hover:text-red-300"
           >
             <LogOut size={20} />
             {isSidebarOpen && <span className="text-sm font-medium">Log Out</span>}
@@ -209,6 +246,13 @@ export function AdminLayout() {
           </div>
           
           <div className="flex items-center gap-4">
+             <button
+               onClick={handleLogout}
+               aria-label="Log out"
+               className="lg:hidden p-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+             >
+               <LogOut size={22} />
+             </button>
              <div className="hidden sm:flex flex-col items-end">
                 <span className="text-sm font-bold">{user?.displayName}</span>
                 <span className="text-[10px] text-[#12A8FF] font-black uppercase tracking-widest">{profile?.role}</span>

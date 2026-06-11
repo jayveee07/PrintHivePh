@@ -46,6 +46,7 @@ export function Navbar() {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services' },
+    { name: 'Bookings', href: '/bookings' },
     { name: 'Supplies', href: '/supplies' },
     { name: 'Portfolio', href: '/portfolio' },
     { name: 'About', href: '/about' },
@@ -134,7 +135,13 @@ export function Navbar() {
           )}
           {user ? (
             <Link to="/profile" className="flex items-center gap-2 text-white hover:text-[#12A8FF] transition-colors">
-              <img src={user.photoURL || undefined} alt="" className="w-8 h-8 rounded-full border border-white/20" />
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full border border-white/20" />
+              ) : (
+                <div className="w-8 h-8 rounded-full border border-white/20 bg-white/10 flex items-center justify-center text-xs font-bold text-white">
+                  {user.displayName?.charAt(0) || 'U'}
+                </div>
+              )}
               <span className="text-sm font-medium">{user.displayName?.split(' ')[0]}</span>
             </Link>
           ) : (
@@ -185,7 +192,13 @@ export function Navbar() {
               )}
               {user ? (
                  <Link to="/profile" className="flex items-center gap-3 text-white">
-                    <img src={user.photoURL || undefined} alt="" className="w-10 h-10 rounded-full" />
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="" className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white">
+                        {user.displayName?.charAt(0) || 'U'}
+                      </div>
+                    )}
                     <span>My Profile</span>
                  </Link>
               ) : (

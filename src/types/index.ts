@@ -24,7 +24,12 @@ export interface Service {
   title: string;
   description: string;
   price: number;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  priceLabel?: string;
+  unit?: string | null;
   category: string;
+  categoryId?: string;
   iconName: string;
   active: boolean;
 }
@@ -32,22 +37,40 @@ export interface Service {
 export interface Product {
   id: string;
   name: string;
+  brand?: string;
+  unit?: string;
   description: string;
   price: number;
+  wholesalePrice?: number;
   category: string;
   stock: number;
   imageUrl: string;
   barcode?: string;
   createdAt: Date;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  type: 'printing' | 'office' | 'school' | 'merchandise';
+  updatedAt?: Date;
 }
 
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'printing' | 'ready' | 'completed' | 'cancelled';
+
+export type BookingStatus = 'pending' | 'reviewing' | 'approved' | 'in_production' | 'ready' | 'completed' | 'cancelled';
+
+export interface Booking {
+  id: string;
+  customerId: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  serviceType: string;
+  projectTitle: string;
+  description: string;
+  quantity: number;
+  preferredDate: string;
+  budget: number;
+  status: BookingStatus;
+  adminNote?: string;
+  createdAt: any;
+  updatedAt?: any;
+}
 
 export interface Order {
   id: string;
@@ -67,6 +90,7 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  itemType?: 'product' | 'service';
 }
 
 export interface Transaction {

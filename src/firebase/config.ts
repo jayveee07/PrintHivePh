@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics, isSupported } from 'firebase/analytics';
@@ -26,7 +26,7 @@ export const signInWithGoogle = async () => {
     throw error;
   }
 };
-export { signInWithEmailAndPassword };
+export { signInWithEmailAndPassword, createUserWithEmailAndPassword };
 
 // Connection test as required by instructions
 export async function testConnection() {
@@ -88,5 +88,5 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   };
   const errorJson = JSON.stringify(errInfo);
   console.error('Firestore Error: ', errorJson);
-  throw new Error(errorJson);
+  return errorJson;
 }
