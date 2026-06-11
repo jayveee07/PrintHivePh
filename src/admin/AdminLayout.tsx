@@ -34,7 +34,7 @@ export function AdminLayout() {
   const { isAdmin, loading, signOut, user, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [lowStockCount, setLowStockCount] = useState(0);
