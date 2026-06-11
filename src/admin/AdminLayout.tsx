@@ -236,7 +236,7 @@ export function AdminLayout() {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-              className="p-2 hover:bg-white/5 rounded-lg lg:hidden"
+              className="p-2 hover:bg-white/5 rounded-lg"
             >
               {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
