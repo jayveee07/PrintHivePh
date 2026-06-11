@@ -21,7 +21,7 @@ export function Navbar() {
       await signInWithGoogle();
     } catch (error: any) {
       if (error.code === 'auth/unauthorized-domain') {
-        toast.error('Domain not authorized. Check Firebase Console.');
+        toast.error(`Add "${window.location.hostname}" to Firebase Console → Auth → Authorized domains`, { duration: 8000 });
       } else if (error.code !== 'auth/popup-closed-by-user') {
         toast.error('Sign in failed. Please try again.');
       }
