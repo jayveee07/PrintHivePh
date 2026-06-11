@@ -21,6 +21,7 @@ import {
   Database,
   CalendarCheck
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [pendingBookingsCount, setPendingBookingsCount] = useState(0);
@@ -73,7 +75,6 @@ export function AdminLayout() {
   }, [isAdmin]);
 
   const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to log out of the admin dashboard?')) return;
     setIsLoginModalOpen(false);
     await signOut();
     navigate('/');
@@ -220,7 +221,7 @@ export function AdminLayout() {
           </nav>
 
           <button 
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className="mt-4 flex shrink-0 items-center gap-4 rounded-xl border border-red-500/20 px-4 py-3 text-red-400 transition-all hover:bg-red-500/10 hover:text-red-300"
           >
             <LogOut size={20} />
@@ -246,13 +247,13 @@ export function AdminLayout() {
           </div>
           
           <div className="flex items-center gap-4">
-             <button
-               onClick={handleLogout}
-               aria-label="Log out"
-               className="lg:hidden p-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
-             >
-               <LogOut size={22} />
-             </button>
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                aria-label="Log out"
+                className="lg:hidden p-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+              >
+                <LogOut size={22} />
+              </button>
              <div className="hidden sm:flex flex-col items-end">
                 <span className="text-sm font-bold">{user?.displayName}</span>
                 <span className="text-[10px] text-[#12A8FF] font-black uppercase tracking-widest">{profile?.role}</span>
@@ -266,6 +267,42 @@ export function AdminLayout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-[#0B0F19] border border-white/10 rounded-3xl p-8 max-w-sm w-full text-center"
+            >
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 mb-6">
+                <LogOut size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Leave Admin Node?</h3>
+              <p className="text-gray-400 text-sm mb-8">
+                Are you sure you want to log out of the admin dashboard?
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-3 rounded-2xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all"
+                >
+                  Log Out
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
